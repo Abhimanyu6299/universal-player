@@ -1,639 +1,656 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#050505">
-<title>Universal Player</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#050505">
+  <title>Universal Player</title>
 
-<style>
-:root{
-  --bg:#080808;
-  --panel:#111;
-  --panel2:#171717;
-  --line:#292929;
-  --text:#f4f4f4;
-  --muted:#a6a6a6;
-  --accent:#ff6a00
-}
+  <!-- HLS quality/audio support -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 
-*{
-  box-sizing:border-box
-}
+  <style>
+    :root{
+      --bg:#050505;
+      --panel:#101010;
+      --panel2:#171717;
+      --border:#292929;
+      --text:#f4f4f4;
+      --muted:#999;
+      --accent:#1687ff;
+      --danger:#ff4545;
+    }
 
-html,body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:Arial,Helvetica,sans-serif
-}
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color:transparent;
+    }
 
-body{
-  min-height:100vh
-}
+    html,body{
+      margin:0;
+      padding:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:Arial,Helvetica,sans-serif;
+    }
 
-button,input,select{
-  font:inherit
-}
+    body{
+      min-height:100vh;
+    }
 
-button{
-  cursor:pointer
-}
+    button,
+    input,
+    select{
+      font:inherit;
+    }
 
-.app{
-  max-width:1500px;
-  margin:auto;
-  padding:12px
-}
+    button{
+      cursor:pointer;
+    }
 
-.topbar{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  margin-bottom:10px
-}
+    .app{
+      width:100%;
+      max-width:1500px;
+      margin:auto;
+      padding:12px;
+    }
 
-.brand{
-  font-weight:800;
-  font-size:20px;
-  margin-right:auto
-}
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
 
-.topbar button,
-.file-btn,
-.url-btn,
-.tool-btn{
-  border:1px solid var(--line);
-  background:#171717;
-  color:#fff;
-  border-radius:9px;
-  padding:9px 12px
-}
+    header h1{
+      font-size:20px;
+      margin:0;
+    }
 
-.player-shell{
-  position:relative;
-  background:#000;
-  border-radius:12px;
-  overflow:hidden;
-  min-height:280px;
-  height:min(76vh,820px);
-  display:flex;
-  align-items:center;
-  justify-content:center
-}
+    .header-buttons{
+      display:flex;
+      gap:7px;
+    }
 
-.player-shell:fullscreen{
-  height:100vh;
-  border-radius:0
-}
+    .btn{
+      background:#171717;
+      color:#fff;
+      border:1px solid #333;
+      border-radius:8px;
+      padding:9px 12px;
+    }
 
-video{
-  width:100%;
-  height:100%;
-  background:#000;
-  display:block;
-  object-fit:contain;
-  object-position:center
-}
+    .btn:hover{
+      background:#222;
+    }
 
-.audio-screen{
-  position:absolute;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background:radial-gradient(circle at center,#222,#050505 65%)
-}
+    .player-wrap{
+      width:100%;
+      aspect-ratio:16/9;
+      min-height:220px;
+      background:#000;
+      border:1px solid #262626;
+      border-radius:10px;
+      overflow:hidden;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
 
-.audio-screen .note{
-  font-size:70px
-}
+    .player-wrap:fullscreen{
+      width:100vw;
+      height:100vh;
+      aspect-ratio:auto;
+      border:0;
+      border-radius:0;
+      background:#000;
+    }
 
-.player-shell.audio-only .audio-screen{
-  display:flex
-}
+    video{
+      width:100%;
+      height:100%;
+      background:#000;
+      display:block;
+      object-fit:contain;
+      transform-origin:center center;
+    }
 
-.player-shell.audio-only video{
-  opacity:0
-}
+    #ytBox{
+      width:100%;
+      height:100%;
+      display:none;
+      background:#000;
+    }
 
-.overlay-title{
-  position:absolute;
-  top:16px;
-  left:18px;
-  right:18px;
-  font-size:18px;
-  text-shadow:0 2px 8px #000;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  opacity:0;
-  transform:translateY(-6px);
-  transition:.2s;
-  pointer-events:none
-}
+    #ytPlayer{
+      width:100%;
+      height:100%;
+    }
 
-.controls-visible .overlay-title{
-  opacity:1;
-  transform:none
-}
+    .subtitle-overlay{
+      position:absolute;
+      left:4%;
+      right:4%;
+      bottom:8%;
+      text-align:center;
+      pointer-events:none;
+      color:white;
+      text-shadow:
+        2px 2px 3px #000,
+        -2px -2px 3px #000,
+        0 0 5px #000;
+      font-size:100%;
+      line-height:1.35;
+      z-index:5;
+    }
 
-.controls{
-  position:absolute;
-  inset:auto 0 0;
-  padding:10px 12px 12px;
-  background:linear-gradient(transparent,rgba(0,0,0,.9) 40%);
-  opacity:0;
-  transition:.2s
-}
+    .drop-zone{
+      margin-top:10px;
+      padding:20px;
+      border:1px dashed #555;
+      border-radius:10px;
+      text-align:center;
+      background:#0c0c0c;
+    }
 
-.controls-visible .controls{
-  opacity:1
-}
+    .drop-zone.drag{
+      border-color:var(--accent);
+      background:#071321;
+    }
 
-.progress{
-  width:100%;
-  accent-color:var(--accent);
-  margin:0 0 7px
-}
+    .url-row{
+      display:flex;
+      gap:7px;
+      margin-top:8px;
+    }
 
-.control-row{
-  display:flex;
-  align-items:center;
-  gap:7px
-}
+    .url-row input{
+      flex:1;
+      min-width:0;
+    }
 
-.control-row button,
-.control-row select{
-  height:38px;
-  border:0;
-  border-radius:8px;
-  background:rgba(25,25,25,.86);
-  color:#fff;
-  padding:0 10px
-}
+    input[type="text"],
+    input[type="number"],
+    select{
+      width:100%;
+      min-height:42px;
+      background:#080808;
+      color:#fff;
+      border:1px solid #3a3a3a;
+      border-radius:7px;
+      padding:8px 10px;
+      outline:none;
+    }
 
-.control-row .big{
-  font-size:20px;
-  min-width:44px
-}
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus{
+      border-color:var(--accent);
+    }
 
-.time{
-  font-size:13px;
-  color:#eee;
-  white-space:nowrap;
-  margin:0 4px
-}
+    .controls{
+      margin-top:10px;
+      background:#0d0d0d;
+      border:1px solid #292929;
+      border-radius:10px;
+      padding:10px;
+    }
 
-.spacer{
-  flex:1
-}
+    .control-line{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
+    }
 
-.popover{
-  position:absolute;
-  right:10px;
-  bottom:64px;
-  min-width:230px;
-  max-height:70%;
-  overflow:auto;
-  background:rgba(20,20,20,.97);
-  border:1px solid #333;
-  border-radius:12px;
-  box-shadow:0 10px 35px #000;
-  display:none;
-  z-index:20;
-  padding:7px
-}
+    .control-line button{
+      min-width:42px;
+      min-height:40px;
+      background:#171717;
+      color:#fff;
+      border:1px solid #333;
+      border-radius:7px;
+      padding:6px 10px;
+    }
 
-.popover.open{
-  display:block
-}
+    .control-line button:hover{
+      background:#252525;
+    }
 
-.menu-title{
-  font-weight:700;
-  color:#aaa;
-  padding:9px 12px
-}
+    .progress-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin:5px 0 10px;
+    }
 
-.menu-item{
-  width:100%;
-  border:0;
-  background:transparent;
-  color:#fff;
-  text-align:left;
-  padding:11px 12px;
-  border-radius:8px
-}
+    #progress{
+      flex:1;
+      min-width:0;
+    }
 
-.menu-item:hover,
-.menu-item.active{
-  background:#2b2b2b
-}
+    .time{
+      white-space:nowrap;
+      font-size:14px;
+      color:#ddd;
+    }
 
-.menu-item small{
-  display:block;
-  color:#999;
-  margin-top:3px
-}
+    input[type="range"]{
+      accent-color:#1687ff;
+      width:100%;
+    }
 
-.panel{
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:12px;
-  margin-top:10px
-}
+    .main-settings{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+      margin-top:10px;
+    }
 
-.dropzone{
-  border:1px dashed #666;
-  border-radius:10px;
-  padding:18px;
-  text-align:center;
-  color:#ddd
-}
+    .setting-card{
+      background:#111;
+      border:1px solid #292929;
+      border-radius:9px;
+      padding:10px;
+    }
 
-.input-row{
-  display:flex;
-  gap:8px;
-  margin-top:9px
-}
+    .setting-card label{
+      display:block;
+      color:#aaa;
+      font-size:13px;
+      margin-bottom:5px;
+    }
 
-.input-row input{
-  flex:1;
-  min-width:0;
-  background:#090909;
-  border:1px solid #333;
-  color:#fff;
-  border-radius:8px;
-  padding:10px
-}
+    .value-control{
+      display:flex;
+      align-items:center;
+      gap:5px;
+    }
 
-.file-input{
-  display:none
-}
+    .value-control input,
+    .value-control select{
+      flex:1;
+      min-width:0;
+    }
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:8px;
-  margin-top:10px
-}
+    .small-btn{
+      width:40px;
+      height:40px;
+      flex:0 0 40px;
+      background:#181818;
+      color:#fff;
+      border:1px solid #333;
+      border-radius:7px;
+      font-size:20px;
+    }
 
-.card{
-  background:#0c0c0c;
-  border:1px solid #242424;
-  border-radius:10px;
-  padding:10px
-}
+    .value{
+      min-width:65px;
+      text-align:center;
+      color:#fff;
+      font-weight:bold;
+      font-size:14px;
+    }
 
-.card label{
-  display:block;
-  color:#aaa;
-  font-size:12px;
-  margin-bottom:5px
-}
+    .section{
+      margin-top:10px;
+      background:#0d0d0d;
+      border:1px solid #292929;
+      border-radius:10px;
+      padding:10px;
+    }
 
-.card input[type=range],
-.card select{
-  width:100%
-}
+    .section h2{
+      margin:0 0 9px;
+      font-size:16px;
+    }
 
-.status{
-  color:#aaa;
-  font-size:13px;
-  min-height:18px;
-  margin-top:8px
-}
+    .file-row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
 
-.queue{
-  max-height:220px;
-  overflow:auto
-}
+    .file-row input[type="file"]{
+      max-width:100%;
+    }
 
-.queue-item{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:8px;
-  border-bottom:1px solid #222
-}
+    #queue,
+    #history{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
 
-.queue-item button{
-  border:0;
-  background:#222;
-  color:#fff;
-  border-radius:7px;
-  padding:6px 8px
-}
+    .item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      padding:8px;
+      border:1px solid #282828;
+      border-radius:7px;
+      background:#101010;
+    }
 
-.queue-item .name{
-  flex:1;
-  min-width:0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis
-}
+    .item-title{
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
 
-.badge{
-  font-size:11px;
-  color:#aaa
-}
+    .item button{
+      background:#191919;
+      color:white;
+      border:1px solid #333;
+      border-radius:6px;
+      padding:6px 8px;
+    }
 
-.hidden{
-  display:none!important
-}
+    #status{
+      margin-top:10px;
+      color:#aaa;
+      font-size:13px;
+      min-height:20px;
+    }
 
-@media(max-width:700px){
+    .hidden{
+      display:none!important;
+    }
 
-  .app{
-    padding:0
-  }
+    .locked .player-wrap{
+      pointer-events:none;
+    }
 
-  .topbar{
-    padding:8px
-  }
+    .info{
+      color:#888;
+      font-size:12px;
+      line-height:1.5;
+      margin-top:6px;
+    }
 
-  .brand{
-    font-size:17px
-  }
+    @media(max-width:900px){
+      .main-settings{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+      }
+    }
 
-  .player-shell{
-    border-radius:0;
-    height:58vh;
-    min-height:240px
-  }
+    @media(max-width:600px){
+      .app{
+        padding:7px;
+      }
 
-  .panel{
-    border-radius:0;
-    margin-top:6px
-  }
+      header h1{
+        font-size:17px;
+      }
 
-  .controls{
-    padding:7px 7px calc(8px + env(safe-area-inset-bottom))
-  }
+      .main-settings{
+        grid-template-columns:1fr;
+      }
 
-  .control-row{
-    gap:4px
-  }
+      .control-line button{
+        min-width:39px;
+        min-height:38px;
+        padding:5px 8px;
+      }
 
-  .control-row button,
-  .control-row select{
-    height:35px;
-    padding:0 7px;
-    font-size:12px
-  }
+      .player-wrap{
+        min-height:190px;
+      }
 
-  .control-row .desktop-only{
-    display:none
-  }
+      .url-row{
+        flex-direction:column;
+      }
 
-  .time{
-    font-size:11px
-  }
+      .subtitle-overlay{
+        bottom:10%;
+      }
+    }
 
-  .overlay-title{
-    font-size:15px;
-    top:10px;
-    left:10px
-  }
-}
-</style>
+    @media(min-width:1400px){
+      .app{
+        max-width:1700px;
+      }
+    }
+  </style>
 </head>
 
 <body>
-
 <div class="app">
 
-  <div class="topbar">
-    <div class="brand">Universal Player</div>
+  <header>
+    <h1>🎬 Universal Player</h1>
 
-    <label class="file-btn">
-      Open
-      <input
-        id="fileInput"
-        class="file-input"
-        type="file"
-        accept="video/*,audio/*,.mkv,.avi,.mov,.flv,.ts,.m2ts,.webm,.mp4,.mp3,.aac,.m4a,.wav,.flac,.ogg,.opus"
-      >
-    </label>
+    <div class="header-buttons">
+      <button class="btn" id="openBtn">📁 Open</button>
+      <button class="btn" id="fullscreenBtn">⛶ Fullscreen</button>
+    </div>
+  </header>
 
-    <button id="fullscreenBtn">⛶</button>
-  </div>
-
-  <section id="playerShell" class="player-shell">
+  <div id="playerWrap" class="player-wrap">
 
     <video
       id="video"
       playsinline
       preload="metadata"
-    ></video>
+      crossorigin="anonymous">
+    </video>
 
-    <div class="audio-screen">
-      <div class="note">♫</div>
+    <div id="ytBox">
+      <div id="ytPlayer"></div>
     </div>
 
-    <div id="overlayTitle" class="overlay-title"></div>
+    <div id="subtitleOverlay" class="subtitle-overlay"></div>
+  </div>
 
-    <div id="controls" class="controls">
+  <div class="drop-zone" id="dropZone">
+    📂 Drag & Drop Video / Audio Here
+    <br>
+    <small>Local file ya direct media URL use karo</small>
 
-      <input
-        id="progress"
-        class="progress"
-        type="range"
-        min="0"
-        max="1000"
-        value="0"
-      >
+    <div class="file-row" style="margin-top:10px">
+      <input id="fileInput" type="file"
+        accept="video/*,audio/*,.mkv,.avi,.mov,.mp4,.webm,.m4v,.ts,.m2ts,.flv,.wmv,.mp3,.aac,.flac,.wav,.ogg,.opus,.m4a">
+    </div>
+  </div>
 
-      <div class="control-row">
+  <div class="url-row">
+    <input id="urlInput" type="text"
+      placeholder="Direct video/audio URL ya YouTube URL paste karo">
+    <button class="btn" id="playUrlBtn">▶ Play URL</button>
+  </div>
 
-        <button id="prevBtn" class="big">⏮</button>
+  <div class="controls">
 
-        <button id="backBtn">↶10</button>
-
-        <button id="playBtn" class="big">▶</button>
-
-        <button id="forwardBtn">10↷</button>
-
-        <button id="nextBtn" class="big">⏭</button>
-
-        <span id="time" class="time">
-          00:00 / 00:00
-        </span>
-
-        <div class="spacer"></div>
-
-        <button id="audioBtn">🔊</button>
-
-        <button id="subtitleBtn">CC</button>
-
-        <button id="aspectBtn">▣</button>
-
-        <button id="moreBtn">⋮</button>
-
-        <button id="fullscreenBtn2">⛶</button>
-
-      </div>
+    <div class="progress-row">
+      <span class="time" id="currentTime">00:00</span>
+      <input id="progress" type="range" min="0" max="1000" value="0">
+      <span class="time" id="duration">00:00</span>
     </div>
 
-    <div id="audioMenu" class="popover"></div>
-    <div id="subtitleMenu" class="popover"></div>
-    <div id="aspectMenu" class="popover"></div>
-    <div id="moreMenu" class="popover"></div>
+    <div class="control-line">
 
-  </section>
+      <button id="prevBtn" title="Previous">⏮</button>
+      <button id="backBtn" title="-10 seconds">-10</button>
+      <button id="playBtn" title="Play/Pause">▶</button>
+      <button id="forwardBtn" title="+10 seconds">+10</button>
+      <button id="nextBtn" title="Next">⏭</button>
 
-  <section class="panel">
+      <button id="muteBtn" title="Mute">🔊</button>
 
-    <div id="dropzone" class="dropzone">
-      📁 Drag & Drop Video / Audio Here
+      <button id="frameBackBtn" title="Previous frame">◀|</button>
+      <button id="frameNextBtn" title="Next frame">|▶</button>
+
+      <button id="rotateBtn" title="Rotate">🔄</button>
+      <button id="pipBtn" title="Picture in Picture">▣ PiP</button>
+      <button id="lockBtn" title="Lock player">🔒</button>
+      <button id="stopBtn" title="Stop">⏹</button>
+
+      <button id="settingsBtn">⚙ Settings</button>
     </div>
 
-    <div class="input-row">
+  </div>
 
-      <input
-        id="urlInput"
-        type="url"
-        placeholder="Paste direct video/audio URL"
-      >
+  <div id="settingsPanel" class="main-settings">
 
-      <button id="urlBtn" class="url-btn">
-        Play URL
-      </button>
-
-    </div>
-
-    <div id="status" class="status"></div>
-
-  </section>
-
-  <section class="panel">
-
-    <div class="grid">
-
-      <div class="card">
-        <label>Speed</label>
+    <div class="setting-card">
+      <label>Speed</label>
+      <div class="value-control">
+        <button class="small-btn" data-action="minus" data-target="speed">−</button>
         <select id="speed"></select>
+        <button class="small-btn" data-action="plus" data-target="speed">+</button>
       </div>
-
-      <div class="card">
-        <label>Volume</label>
-        <input
-          id="volume"
-          type="range"
-          min="0"
-          max="1"
-          step=".01"
-          value="1"
-        >
-      </div>
-
-      <div class="card">
-        <label>Subtitle size</label>
-        <input
-          id="subSize"
-          type="range"
-          min="70"
-          max="180"
-          value="100"
-        >
-      </div>
-
-      <div class="card">
-        <label>Subtitle delay (ms)</label>
-        <input
-          id="subDelay"
-          type="number"
-          value="0"
-          step="100"
-        >
-      </div>
-
-      <div class="card">
-        <label>Brightness</label>
-        <input
-          id="brightness"
-          type="range"
-          min="50"
-          max="150"
-          value="100"
-        >
-      </div>
-
-      <div class="card">
-        <label>Contrast</label>
-        <input
-          id="contrast"
-          type="range"
-          min="50"
-          max="150"
-          value="100"
-        >
-      </div>
-
-      <div class="card">
-        <label>Saturation</label>
-        <input
-          id="saturation"
-          type="range"
-          min="0"
-          max="200"
-          value="100"
-        >
-      </div>
-
-      <div class="card">
-        <label>Hue</label>
-        <input
-          id="hue"
-          type="range"
-          min="-180"
-          max="180"
-          value="0"
-        >
-      </div>
-
-      <div class="card">
-        <label>Repeat</label>
-        <select id="repeat">
-          <option value="off">Off</option>
-          <option value="one">One</option>
-          <option value="all">All</option>
-        </select>
-      </div>
-
-      <div class="card">
-        <label>Shuffle</label>
-        <button id="shuffleBtn" class="tool-btn">
-          Off
-        </button>
-      </div>
-
     </div>
 
-  </section>
-
-  <section class="panel">
-
-    <b>Playlist / Queue</b>
-
-    <div id="queue" class="queue"></div>
-
-  </section>
-
-  <section class="panel">
-
-    <b>Media info</b>
-
-    <div id="info" class="status">
-      No media loaded.
+    <div class="setting-card">
+      <label>Volume</label>
+      <div class="value-control">
+        <button class="small-btn" data-action="minus" data-target="volume">−</button>
+        <span id="volumeValue" class="value">100%</span>
+        <button class="small-btn" data-action="plus" data-target="volume">+</button>
+      </div>
+      <input id="volume" type="range" min="0" max="100" step="1" value="100">
     </div>
 
-  </section>
+    <div class="setting-card">
+      <label>Brightness</label>
+      <div class="value-control">
+        <button class="small-btn" data-action="minus" data-target="brightness">−</button>
+        <span id="brightnessValue" class="value">100%</span>
+        <button class="small-btn" data-action="plus" data-target="brightness">+</button>
+      </div>
+      <input id="brightness" type="range" min="0" max="200" step="1" value="100">
+    </div>
+
+    <div class="setting-card">
+      <label>Contrast</label>
+      <div class="value-control">
+        <button class="small-btn" data-action="minus" data-target="contrast">−</button>
+        <span id="contrastValue" class="value">100%</span>
+        <button class="small-btn" data-action="plus" data-target="contrast">+</button>
+      </div>
+      <input id="contrast" type="range" min="0" max="200" step="1" value="100">
+    </div>
+
+    <div class="setting-card">
+      <label>Saturation</label>
+      <div class="value-control">
+        <button class="small-btn" data-action="minus" data-target="saturation">−</button>
+        <span id="saturationValue" class="value">100%</span>
+        <button class="small-btn" data-action="plus" data-target="saturation">+</button>
+      </div>
+      <input id="saturation" type="range" min="0" max="200" step="1" value="100">
+    </div>
+
+    <div class="setting-card">
+      <label>Subtitle Size</label>
+      <div class="value-control">
+        <button class="small-btn" data-action="minus" data-target="subtitleSize">−</button>
+        <span id="subtitleSizeValue" class="value">100%</span>
+        <button class="small-btn" data-action="plus" data-target="subtitleSize">+</button>
+      </div>
+      <input id="subtitleSize" type="range" min="50" max="200" step="5" value="100">
+    </div>
+
+    <div class="setting-card">
+      <label>Subtitle Delay</label>
+      <div class="value-control">
+        <button class="small-btn" data-action="minus" data-target="subtitleDelay">−</button>
+        <input id="subtitleDelay" type="number" step="100" value="0">
+        <button class="small-btn" data-action="plus" data-target="subtitleDelay">+</button>
+      </div>
+      <div class="info">milliseconds — + = subtitle late, − = early</div>
+    </div>
+
+    <div class="setting-card">
+      <label>Aspect Ratio</label>
+      <select id="aspect">
+        <option value="best">Best Fit</option>
+        <option value="fit">Fit Screen</option>
+        <option value="fill">Fill / Stretch</option>
+        <option value="original">Original</option>
+        <option value="16:9">16:9</option>
+        <option value="4:3">4:3</option>
+        <option value="16:10">16:10</option>
+        <option value="2:1">2:1</option>
+        <option value="2.21:1">2.21:1</option>
+        <option value="2.35:1">2.35:1</option>
+        <option value="2.39:1">2.39:1</option>
+        <option value="5:4">5:4</option>
+        <option value="center">Centre</option>
+      </select>
+    </div>
+
+    <div class="setting-card">
+      <label>Video Quality</label>
+      <select id="quality">
+        <option value="-1">Auto</option>
+      </select>
+      <div class="info" id="qualityInfo">
+        HLS/source-supported qualities appear here.
+      </div>
+    </div>
+
+    <div class="setting-card">
+      <label>Audio Track</label>
+      <select id="audioTrack">
+        <option value="-1">Default</option>
+      </select>
+      <div class="info" id="audioInfo">
+        Browser/source supported tracks.
+      </div>
+    </div>
+
+    <div class="setting-card">
+      <label>Subtitle</label>
+      <select id="subtitleMode">
+        <option value="off">Off</option>
+        <option value="on">On</option>
+      </select>
+    </div>
+
+    <div class="setting-card">
+      <label>Subtitle File</label>
+      <input id="subtitleFile" type="file" accept=".srt,.vtt,text/vtt,application/x-subrip">
+    </div>
+
+    <div class="setting-card">
+      <label>Repeat</label>
+      <select id="repeat">
+        <option value="off">Off</option>
+        <option value="one">Repeat One</option>
+        <option value="all">Repeat All</option>
+      </select>
+    </div>
+
+    <div class="setting-card">
+      <label>Shuffle</label>
+      <select id="shuffle">
+        <option value="off">Off</option>
+        <option value="on">On</option>
+      </select>
+    </div>
+
+  </div>
+
+  <div class="section">
+    <h2>Playlist / Queue</h2>
+    <div id="queue"></div>
+  </div>
+
+  <div class="section">
+    <h2>History</h2>
+    <div id="history"></div>
+  </div>
+
+  <div id="status"></div>
 
 </div>
 
 <script type="module" src="./app.js"></script>
-
 </body>
 </html>
