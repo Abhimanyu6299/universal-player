@@ -1,85 +1,250 @@
-import { FFmpeg } from "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm";
+import {
+  FFmpeg
+} from "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm";
+
 import {
   fetchFile,
   toBlobURL
 } from "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/+esm";
 
+
 let ffmpeg = null;
-let loading = null;
 
-export async function getFFmpeg(onProgress = () => {}) {
-  if (ffmpeg) return ffmpeg;
+let loadingPromise = null;
 
-  if (loading) return loading;
 
-  loading = (async () => {
-    ffmpeg = new FFmpeg();
+/* ================= LOAD FFMPEG ================= */
 
-    ffmpeg.on("progress", ({ progress }) => {
-      onProgress(Math.round(progress * 100));
-    });
+export async function getFFmpeg(
+  onProgress = () => {}
+) {
 
-    ffmpeg.on("log", ({ message }) => {
-      console.log("[FFmpeg]", message);
-    });
-
-    const baseURL =
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
-
-    await ffmpeg.load({
-      coreURL: await toBlobURL(
-        `${baseURL}/ffmpeg-core.js`,
-        "text/javascript"
-      ),
-      wasmURL: await toBlobURL(
-        `${baseURL}/ffmpeg-core.wasm`,
-        "application/wasm"
-      )
-    });
+  if (ffmpeg) {
 
     return ffmpeg;
-  })();
 
-  return loading;
+  }
+
+
+  if (loadingPromise) {
+
+    return loadingPromise;
+
+  }
+
+
+  loadingPromise =
+    (async () => {
+
+      ffmpeg =
+        new FFmpeg();
+
+
+      ffmpeg.on(
+        "progress",
+        ({progress}) => {
+
+          const percent =
+            Math.max(
+              0,
+              Math.min(
+                100,
+                Math.round(
+                  progress * 100
+                )
+              )
+            );
+
+
+          onProgress(
+            percent
+          );
+
+        }
+      );
+
+
+      ffmpeg.on(
+        "log",
+        ({message}) => {
+
+          console.log(
+            "[FFmpeg]",
+            message
+          );
+
+        }
+      );
+
+
+      const baseURL =
+        "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
+
+
+      await ffmpeg.load({
+
+        coreURL:
+          await toBlobURL(
+            `${baseURL}/ffmpeg-core.js`,
+            "text/javascript"
+          ),
+
+        wasmURL:
+          await toBlobURL(
+            `${baseURL}/ffmpeg-core.wasm`,
+            "application/wasm"
+          )
+
+      });
+
+
+      return ffmpeg;
+
+    })();
+
+
+  try {
+
+    return await loadingPromise;
+
+  } catch(error) {
+
+    ffmpeg =
+      null;
+
+    loadingPromise =
+      null;
+
+    throw error;
+
+  }
+
 }
 
-export async function transcodeVideo(file, onProgress = () => {}) {
-  const engine = await getFFmpeg(onProgress);
 
-  const inputName = "input." + getExtension(file.name);
-  const outputName = "output.mp4";
+/* ================= TRANSCODE VIDEO ================= */
 
-  await engine.writeFile(inputName, await fetchFile(file));
+export async function transcodeVideo(
+  file,
+  onProgress = () => {}
+) {
 
-  await engine.exec([
-    "-i",
-    inputName,
-    "-c:v",
-    "libx264",
-    "-preset",
-    "veryfast",
-    "-crf",
-    "23",
-    "-c:a",
-    "aac",
-    "-b:a",
-    "128k",
-    "-movflags",
-    "+faststart",
-    outputName
-  ]);
+  const engine =
+    await getFFmpeg(
+      onProgress
+    );
 
-  const data = await engine.readFile(outputName);
 
-  await engine.deleteFile(inputName);
-  await engine.deleteFile(outputName);
+  const extension =
+    getExtension(
+      file.name
+    );
 
-  return new Blob([data.buffer], {
-    type: "video/mp4"
-  });
+
+  const inputName =
+    `input.${extension}`;
+
+
+  const outputName =
+    "output.mp4";
+
+
+  try {
+
+    await engine.writeFile(
+      inputName,
+      await fetchFile(file)
+    );
+
+
+    await engine.exec([
+      "-i",
+      inputName,
+
+      "-c:v",
+      "libx264",
+
+      "-preset",
+      "veryfast",
+
+      "-crf",
+      "23",
+
+      "-c:a",
+      "aac",
+
+      "-b:a",
+      "128k",
+
+      "-movflags",
+      "+faststart",
+
+      outputName
+    ]);
+
+
+    const data =
+      await engine.readFile(
+        outputName
+      );
+
+
+    return new Blob(
+      [data.buffer],
+      {
+        type:"video/mp4"
+      }
+    );
+
+
+  } finally {
+
+    try {
+
+      await engine.deleteFile(
+        inputName
+      );
+
+    } catch {}
+
+
+    try {
+
+      await engine.deleteFile(
+        outputName
+      );
+
+    } catch {}
+
+  }
+
 }
+
+
+/* ================= EXTENSION ================= */
 
 function getExtension(name) {
-  const parts = name.split(".");
-  return parts.length > 1 ? parts.pop().toLowerCase() : "bin";
+
+  const parts =
+    String(name)
+      .split(".");
+
+
+  if (
+    parts.length > 1
+  ) {
+
+    return parts
+      .pop()
+      .toLowerCase()
+      .replace(
+        /[^a-z0-9]/g,
+        ""
+      );
+
+  }
+
+
+  return "bin";
+
 }
