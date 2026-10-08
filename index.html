@@ -1,222 +1,321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0,
-                 viewport-fit=cover">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Universal Player</title>
 
-  <meta name="theme-color" content="#000000">
+<style>
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:#000;
+  color:#fff;
+  font-family:Arial,sans-serif;
+}
+body{overflow:hidden}
 
-  <title>Universal Player</title>
+.app{
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  background:#000;
+}
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+.topbar{
+  height:58px;
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 18px;
+  background:#080808;
+  border-bottom:1px solid #222;
+}
 
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-    }
+.logo{
+  font-size:20px;
+  font-weight:700;
+}
 
-    body {
-      overflow: hidden;
-    }
+.top-actions{
+  display:flex;
+  gap:8px;
+}
 
-    .app {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      background: #000;
-    }
+button,select,input{
+  background:#111;
+  color:#fff;
+  border:1px solid #333;
+  border-radius:7px;
+  padding:9px 12px;
+  font-size:14px;
+}
 
-    .topbar {
-      height: 64px;
-      min-height: 64px;
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      border-bottom: 1px solid #222;
-      background: #050505;
-    }
+button{
+  cursor:pointer;
+}
 
-    .logo {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: .3px;
-    }
+button:hover{
+  background:#1d1d1d;
+}
 
-    .content {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
+.content{
+  flex:1;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+}
 
-    .player {
-      width: 100%;
-      height: 100%;
-      max-width: 1600px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-      position: relative;
-      overflow: hidden;
-      border-radius: 8px;
-    }
+.player{
+  width:100%;
+  height:100%;
+  max-width:1800px;
+  position:relative;
+  background:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  border-radius:8px;
+}
 
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      background: #000;
-      outline: none;
-    }
+video{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000;
+  outline:none;
+  transition:transform .2s ease;
+}
 
-    .empty {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 30px;
-      pointer-events: none;
-    }
+.empty{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  pointer-events:none;
+  padding:30px;
+}
 
-    .empty-title {
-      font-size: clamp(22px, 3vw, 38px);
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
+.empty-title{
+  font-size:clamp(24px,4vw,42px);
+  font-weight:700;
+  margin-bottom:10px;
+}
 
-    .empty-text {
-      color: #aaa;
-      font-size: clamp(14px, 1.5vw, 18px);
-    }
+.empty-text{
+  color:#999;
+  font-size:16px;
+}
 
-    .controls {
-      min-height: 72px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: #050505;
-      border-top: 1px solid #222;
-      flex-wrap: wrap;
-    }
+.bottom{
+  background:#070707;
+  border-top:1px solid #222;
+  padding:10px;
+}
 
-    button,
-    select,
-    input {
-      background: #111;
-      color: #fff;
-      border: 1px solid #333;
-      border-radius: 7px;
-      padding: 9px 12px;
-      font-size: 14px;
-    }
+.progress{
+  width:100%;
+  margin-bottom:9px;
+}
 
-    button {
-      cursor: pointer;
-    }
+.progress input{
+  width:100%;
+  padding:0;
+  height:5px;
+  border:0;
+  cursor:pointer;
+}
 
-    button:hover {
-      background: #1c1c1c;
-    }
+.controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
 
-    .url-box {
-      flex: 1;
-      min-width: 220px;
-    }
+.url-box{
+  flex:1;
+  min-width:220px;
+}
 
-    .url-box input {
-      width: 100%;
-    }
+.url-box input{
+  width:100%;
+}
 
-    @media (max-width: 700px) {
-      .topbar {
-        height: 54px;
-        min-height: 54px;
-        padding: 0 12px;
-      }
+.time{
+  min-width:95px;
+  text-align:center;
+  color:#bbb;
+  font-size:13px;
+}
 
-      .content {
-        padding: 0;
-      }
+.history-panel{
+  display:none;
+  position:absolute;
+  right:12px;
+  top:65px;
+  width:min(380px,calc(100% - 24px));
+  max-height:60vh;
+  overflow:auto;
+  background:#101010;
+  border:1px solid #333;
+  border-radius:10px;
+  z-index:20;
+  padding:12px;
+}
 
-      .player {
-        border-radius: 0;
-      }
+.history-panel.show{
+  display:block;
+}
 
-      .controls {
-        padding: 10px;
-      }
-    }
+.history-title{
+  font-weight:bold;
+  margin-bottom:10px;
+}
 
-    @media (min-width: 1200px) {
-      .content {
-        padding: 24px;
-      }
+.history-item{
+  padding:10px;
+  border-bottom:1px solid #292929;
+  cursor:pointer;
+  word-break:break-all;
+}
 
-      .player {
-        border: 1px solid #222;
-      }
-    }
-  </style>
+.history-item:hover{
+  background:#1b1b1b;
+}
+
+.no-history{
+  color:#888;
+  padding:10px 0;
+}
+
+@media(max-width:700px){
+  .topbar{
+    height:52px;
+    min-height:52px;
+    padding:0 10px;
+  }
+
+  .logo{
+    font-size:17px;
+  }
+
+  .content{
+    padding:0;
+  }
+
+  .player{
+    border-radius:0;
+  }
+
+  .bottom{
+    padding:7px;
+  }
+
+  .controls{
+    gap:5px;
+  }
+
+  button,select,input{
+    padding:8px 9px;
+    font-size:13px;
+  }
+
+  .url-box{
+    min-width:100%;
+    order:10;
+  }
+
+  .time{
+    min-width:auto;
+  }
+}
+</style>
 </head>
 
 <body>
 
 <div class="app">
 
-  <header class="topbar">
-    <div class="logo">Universal Player</div>
-  </header>
+<header class="topbar">
+  <div class="logo">Universal Player</div>
 
-  <main class="content">
+  <div class="top-actions">
+    <button id="historyBtn">History</button>
+  </div>
+</header>
 
-    <section class="player">
+<main class="content">
 
-      <video
-        id="video"
-        controls
-        playsinline
-        preload="metadata">
-      </video>
+<section class="player" id="player">
 
-      <div class="empty" id="empty">
-        <div class="empty-title">Universal Player</div>
-        <div class="empty-text">
-          Select a video or enter a video URL
-        </div>
-      </div>
+  <video
+    id="video"
+    playsinline
+    preload="metadata">
+  </video>
 
-    </section>
+  <div class="empty" id="empty">
+    <div class="empty-title">Universal Player</div>
+    <div class="empty-text">
+      Open a video or paste a direct video URL
+    </div>
+  </div>
 
-  </main>
+  <div class="history-panel" id="historyPanel">
+    <div class="history-title">Playback History</div>
+    <div id="historyList"></div>
+  </div>
 
-  <section class="controls">
+</section>
 
-    <button id="fileButton">
-      Open Video
-    </button>
+</main>
+
+<section class="bottom">
+
+  <div class="progress">
+    <input
+      id="progress"
+      type="range"
+      min="0"
+      max="100"
+      value="0"
+      step="0.01">
+  </div>
+
+  <div class="controls">
+
+    <button id="fileButton">Open</button>
 
     <input
       id="fileInput"
       type="file"
       accept="video/*,audio/*"
       hidden>
+
+    <button id="playPause">▶</button>
+
+    <button id="back10">−10s</button>
+    <button id="forward10">+10s</button>
+
+    <span class="time" id="time">00:00 / 00:00</span>
+
+    <select id="speed"></select>
+
+    <button id="rotate">↻ Rotate</button>
+
+    <button id="fullscreen">⛶ Fullscreen</button>
 
     <div class="url-box">
       <input
@@ -225,94 +324,336 @@
         placeholder="Paste direct video URL">
     </div>
 
-    <button id="urlButton">
-      Play URL
-    </button>
+    <button id="urlButton">Play URL</button>
 
-    <select id="speed">
-      <option value="0.25">0.25×</option>
-      <option value="0.5">0.5×</option>
-      <option value="0.75">0.75×</option>
-      <option value="1" selected>1×</option>
-      <option value="1.25">1.25×</option>
-      <option value="1.5">1.5×</option>
-      <option value="1.75">1.75×</option>
-      <option value="2">2×</option>
-    </select>
+  </div>
 
-    <button id="fullscreen">
-      Fullscreen
-    </button>
-
-  </section>
+</section>
 
 </div>
 
 <script>
-  const video = document.getElementById("video");
-  const fileInput = document.getElementById("fileInput");
-  const fileButton = document.getElementById("fileButton");
-  const urlInput = document.getElementById("urlInput");
-  const urlButton = document.getElementById("urlButton");
-  const speed = document.getElementById("speed");
-  const fullscreen = document.getElementById("fullscreen");
-  const empty = document.getElementById("empty");
+const video = document.getElementById("video");
+const fileInput = document.getElementById("fileInput");
+const fileButton = document.getElementById("fileButton");
+const playPause = document.getElementById("playPause");
+const back10 = document.getElementById("back10");
+const forward10 = document.getElementById("forward10");
+const progress = document.getElementById("progress");
+const timeDisplay = document.getElementById("time");
+const speed = document.getElementById("speed");
+const rotateButton = document.getElementById("rotate");
+const fullscreen = document.getElementById("fullscreen");
+const urlInput = document.getElementById("urlInput");
+const urlButton = document.getElementById("urlButton");
+const empty = document.getElementById("empty");
+const historyBtn = document.getElementById("historyBtn");
+const historyPanel = document.getElementById("historyPanel");
+const historyList = document.getElementById("historyList");
 
-  fileButton.addEventListener("click", () => {
-    fileInput.click();
+let currentObjectURL = null;
+let rotation = 0;
+
+/* SPEED OPTIONS
+   Fine control from 0.25 to 2.00
+*/
+for(let i=25;i<=200;i++){
+  const value=(i/100).toFixed(2);
+  const option=document.createElement("option");
+  option.value=value;
+  option.textContent=value+"×";
+
+  if(value==="1.00"){
+    option.selected=true;
+  }
+
+  speed.appendChild(option);
+}
+
+function formatTime(seconds){
+  if(!Number.isFinite(seconds)) return "00:00";
+
+  seconds=Math.max(0,Math.floor(seconds));
+
+  const h=Math.floor(seconds/3600);
+  const m=Math.floor((seconds%3600)/60);
+  const s=seconds%60;
+
+  if(h>0){
+    return String(h).padStart(2,"0")+":"+
+           String(m).padStart(2,"0")+":"+
+           String(s).padStart(2,"0");
+  }
+
+  return String(m).padStart(2,"0")+":"+
+         String(s).padStart(2,"0");
+}
+
+function updateTime(){
+  const current=video.currentTime || 0;
+  const duration=video.duration || 0;
+
+  timeDisplay.textContent =
+    formatTime(current)+" / "+formatTime(duration);
+
+  if(duration){
+    progress.value=(current/duration)*100;
+  }
+}
+
+function updatePlayButton(){
+  playPause.textContent=video.paused ? "▶" : "⏸";
+}
+
+function hideEmpty(){
+  empty.style.display="none";
+}
+
+function addHistory(name,url){
+  let history=JSON.parse(
+    localStorage.getItem("universalPlayerHistory") || "[]"
+  );
+
+  history=history.filter(item =>
+    item.url !== url
+  );
+
+  history.unshift({
+    name:name,
+    url:url,
+    time:Date.now()
   });
 
-  fileInput.addEventListener("change", () => {
-    const file = fileInput.files[0];
+  history=history.slice(0,30);
 
-    if (!file) return;
+  localStorage.setItem(
+    "universalPlayerHistory",
+    JSON.stringify(history)
+  );
 
-    const objectURL = URL.createObjectURL(file);
+  renderHistory();
+}
 
-    video.src = objectURL;
-    video.load();
-    video.play().catch(() => {});
+function renderHistory(){
 
-    empty.style.display = "none";
+  const history=JSON.parse(
+    localStorage.getItem("universalPlayerHistory") || "[]"
+  );
+
+  historyList.innerHTML="";
+
+  if(!history.length){
+    historyList.innerHTML=
+      '<div class="no-history">No history yet</div>';
+    return;
+  }
+
+  history.forEach(item=>{
+
+    const div=document.createElement("div");
+
+    div.className="history-item";
+
+    div.textContent=item.name;
+
+    div.addEventListener("click",()=>{
+
+      video.src=item.url;
+      video.load();
+
+      hideEmpty();
+
+      video.play().catch(()=>{});
+
+      historyPanel.classList.remove("show");
+    });
+
+    historyList.appendChild(div);
   });
+}
 
-  urlButton.addEventListener("click", () => {
-    const url = urlInput.value.trim();
+fileButton.addEventListener("click",()=>{
+  fileInput.click();
+});
 
-    if (!url) return;
+fileInput.addEventListener("change",()=>{
 
-    video.src = url;
-    video.load();
-    video.play().catch(() => {});
+  const file=fileInput.files[0];
 
-    empty.style.display = "none";
-  });
+  if(!file) return;
 
-  speed.addEventListener("change", () => {
-    video.playbackRate = Number(speed.value);
-  });
+  if(currentObjectURL){
+    URL.revokeObjectURL(currentObjectURL);
+  }
 
-  fullscreen.addEventListener("click", async () => {
+  currentObjectURL=URL.createObjectURL(file);
 
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      } else {
-        await video.requestFullscreen();
-      }
-    } catch (error) {
-      console.log(error);
+  video.src=currentObjectURL;
+
+  video.load();
+
+  hideEmpty();
+
+  video.play().catch(()=>{});
+
+  addHistory(file.name,currentObjectURL);
+});
+
+urlButton.addEventListener("click",()=>{
+
+  const url=urlInput.value.trim();
+
+  if(!url) return;
+
+  video.src=url;
+
+  video.load();
+
+  hideEmpty();
+
+  video.play().catch(()=>{});
+
+  addHistory(url,url);
+});
+
+playPause.addEventListener("click",()=>{
+
+  if(video.paused){
+    video.play().catch(()=>{});
+  }else{
+    video.pause();
+  }
+
+});
+
+back10.addEventListener("click",()=>{
+  video.currentTime=Math.max(
+    0,
+    video.currentTime-10
+  );
+});
+
+forward10.addEventListener("click",()=>{
+  video.currentTime=Math.min(
+    video.duration || Infinity,
+    video.currentTime+10
+  );
+});
+
+progress.addEventListener("input",()=>{
+
+  if(!video.duration) return;
+
+  video.currentTime=
+    (Number(progress.value)/100)*video.duration;
+
+});
+
+speed.addEventListener("change",()=>{
+  video.playbackRate=Number(speed.value);
+});
+
+rotateButton.addEventListener("click",()=>{
+
+  rotation=(rotation+90)%360;
+
+  video.style.transform=
+    "rotate("+rotation+"deg)";
+
+});
+
+fullscreen.addEventListener("click",async()=>{
+
+  try{
+
+    if(document.fullscreenElement){
+      await document.exitFullscreen();
+      return;
     }
 
-  });
+    if(document.documentElement.requestFullscreen){
+      await document.documentElement.requestFullscreen();
+    }
 
-  video.addEventListener("error", () => {
-    console.log("Browser could not play this media.");
-  });
+  }catch(error){
+    console.log(error);
+  }
 
-  video.addEventListener("loadeddata", () => {
-    empty.style.display = "none";
-  });
+});
+
+historyBtn.addEventListener("click",()=>{
+
+  historyPanel.classList.toggle("show");
+
+  renderHistory();
+
+});
+
+video.addEventListener("play",updatePlayButton);
+video.addEventListener("pause",updatePlayButton);
+
+video.addEventListener("timeupdate",updateTime);
+video.addEventListener("loadedmetadata",updateTime);
+
+video.addEventListener("loadeddata",()=>{
+  hideEmpty();
+});
+
+video.addEventListener("error",()=>{
+
+  console.log(
+    "This browser cannot play this media."
+  );
+
+});
+
+document.addEventListener("keydown",(event)=>{
+
+  if(event.target.tagName==="INPUT") return;
+
+  switch(event.key){
+
+    case " ":
+      event.preventDefault();
+
+      if(video.paused){
+        video.play().catch(()=>{});
+      }else{
+        video.pause();
+      }
+
+      break;
+
+    case "ArrowLeft":
+      video.currentTime=Math.max(
+        0,
+        video.currentTime-5
+      );
+      break;
+
+    case "ArrowRight":
+      video.currentTime=Math.min(
+        video.duration || Infinity,
+        video.currentTime+5
+      );
+      break;
+
+    case "f":
+    case "F":
+      fullscreen.click();
+      break;
+
+    case "r":
+    case "R":
+      rotateButton.click();
+      break;
+
+  }
+
+});
+
+renderHistory();
+updatePlayButton();
 </script>
 
 </body>
