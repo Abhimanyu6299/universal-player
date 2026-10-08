@@ -3,15 +3,21 @@ import {
   getFFmpeg
 } from "./ffmpeg-loader.js";
 
+
+/* ================= ELEMENTS ================= */
+
 const video = document.getElementById("video");
+const player = document.getElementById("player");
 
 const fileInput = document.getElementById("fileInput");
 const urlInput = document.getElementById("urlInput");
 const playUrlBtn = document.getElementById("playUrlBtn");
 
 const playBtn = document.getElementById("playBtn");
+const stopBtn = document.getElementById("stopBtn");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
+
 const backBtn = document.getElementById("backBtn");
 const forwardBtn = document.getElementById("forwardBtn");
 
@@ -27,36 +33,73 @@ const aspect = document.getElementById("aspect");
 
 const rotateBtn = document.getElementById("rotateBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
+const pipBtn = document.getElementById("pipBtn");
 
-const audioTracks = document.getElementById("audioTracks");
-const subtitleTracks = document.getElementById("subtitleTracks");
-const subtitleInput = document.getElementById("subtitleInput");
-const subtitleSize = document.getElementById("subtitleSize");
+const lockBtn = document.getElementById("lockBtn");
 
-const dropZone = document.getElementById("dropZone");
-const playlist = document.getElementById("playlist");
+const repeatMode =
+  document.getElementById("repeatMode");
 
-const status = document.getElementById("status");
+const shuffleBtn =
+  document.getElementById("shuffleBtn");
 
-const ffmpegBox = document.getElementById("ffmpegBox");
-const ffmpegProgress = document.getElementById("ffmpegProgress");
-const ffmpegText = document.getElementById("ffmpegText");
+const audioTracks =
+  document.getElementById("audioTracks");
+
+const subtitleTracks =
+  document.getElementById("subtitleTracks");
+
+const subtitleInput =
+  document.getElementById("subtitleInput");
+
+const subtitleSize =
+  document.getElementById("subtitleSize");
+
+const dropZone =
+  document.getElementById("dropZone");
+
+const playlist =
+  document.getElementById("playlist");
+
+const status =
+  document.getElementById("status");
+
+const videoMessage =
+  document.getElementById("videoMessage");
+
+const ffmpegBox =
+  document.getElementById("ffmpegBox");
+
+const ffmpegProgress =
+  document.getElementById("ffmpegProgress");
+
+const ffmpegText =
+  document.getElementById("ffmpegText");
+
+
+/* ================= STATE ================= */
 
 let queue = [];
 let currentIndex = -1;
+
 let currentURL = null;
 let currentFile = null;
+
 let rotation = 0;
 
+let screenLocked = false;
+let shuffleEnabled = false;
+
 let subtitleURL = null;
-let subtitleTrack = null;
+let subtitleTrackElement = null;
 
+let lastTap = 0;
 
-/* ================= STATUS ================= */
+let touchStartX = 0;
+let touchStartY = 0;
+let touchStartTime = 0;
 
-function setStatus(text) {
-  status.textContent = text;
-}
+let isTranscoding = false;
 
 
 /* ================= SPEED ================= */
@@ -65,10 +108,13 @@ for (let i = 25; i <= 400; i++) {
 
   const value = i / 100;
 
-  const option = document.createElement("option");
+  const option =
+    document.createElement("option");
 
   option.value = value;
-  option.textContent = value.toFixed(2) + "×";
+
+  option.textContent =
+    value.toFixed(2) + "×";
 
   speed.appendChild(option);
 }
@@ -76,130 +122,337 @@ for (let i = 25; i <= 400; i++) {
 speed.value = "1";
 
 speed.onchange = () => {
-  video.playbackRate = Number(speed.value);
+
+  video.playbackRate =
+    Number(speed.value);
+
 };
 
 
-/* ================= PLAY ================= */
+/* ================= STATUS ================= */
+
+function setStatus(message) {
+
+  status.textContent = message;
+
+}
+
+
+/* ================= MESSAGE ================= */
+
+function showMessage(text) {
+
+  videoMessage.textContent = text;
+
+  videoMessage.style.display = "block";
+
+  clearTimeout(
+    showMessage.timer
+  );
+
+  showMessage.timer =
+    setTimeout(() => {
+
+      videoMessage.style.display =
+        "none";
+
+    }, 700);
+
+}
+
+
+/* ================= PLAY / PAUSE ================= */
 
 playBtn.onclick = () => {
 
   if (video.paused) {
+
     video.play().catch(() => {});
+
   } else {
+
     video.pause();
+
   }
+
 };
 
-video.addEventListener("play", () => {
-  playBtn.textContent = "⏸";
-});
 
-video.addEventListener("pause", () => {
-  playBtn.textContent = "▶";
-});
+video.addEventListener(
+  "play",
+  () => {
+
+    playBtn.textContent = "⏸";
+
+  }
+);
+
+
+video.addEventListener(
+  "pause",
+  () => {
+
+    playBtn.textContent = "▶";
+
+  }
+);
+
+
+/* ================= STOP ================= */
+
+stopBtn.onclick = () => {
+
+  video.pause();
+
+  video.currentTime = 0;
+
+  progress.value = 0;
+
+  currentTime.textContent =
+    "00:00";
+
+  setStatus("Stopped");
+
+};
 
 
 /* ================= SEEK ================= */
 
 backBtn.onclick = () => {
-  video.currentTime = Math.max(
-    0,
-    video.currentTime - 10
-  );
+
+  video.currentTime =
+    Math.max(
+      0,
+      video.currentTime - 10
+    );
+
+  showMessage("-10");
+
 };
 
+
 forwardBtn.onclick = () => {
-  video.currentTime = Math.min(
-    video.duration || Infinity,
-    video.currentTime + 10
-  );
+
+  video.currentTime =
+    Math.min(
+      video.duration || Infinity,
+      video.currentTime + 10
+    );
+
+  showMessage("+10");
+
 };
 
 
 /* ================= PROGRESS ================= */
 
-video.addEventListener("timeupdate", () => {
+video.addEventListener(
+  "timeupdate",
+  () => {
 
-  if (!video.duration) return;
+    if (!Number.isFinite(video.duration))
+      return;
 
-  progress.value =
-    (video.currentTime / video.duration) * 100;
+    if (video.duration <= 0)
+      return;
 
-  currentTime.textContent =
-    formatTime(video.currentTime);
-});
+    progress.value =
+      video.currentTime /
+      video.duration *
+      100;
 
-video.addEventListener("loadedmetadata", () => {
+    currentTime.textContent =
+      formatTime(video.currentTime);
 
-  duration.textContent =
-    formatTime(video.duration);
+    saveResumePosition();
 
-  detectAudioTracks();
-});
+  }
+);
+
+
+video.addEventListener(
+  "loadedmetadata",
+  () => {
+
+    duration.textContent =
+      formatTime(video.duration);
+
+    detectAudioTracks();
+
+  }
+);
+
 
 progress.oninput = () => {
 
-  if (!video.duration) return;
+  if (!video.duration)
+    return;
 
   video.currentTime =
-    progress.value / 100 * video.duration;
+    Number(progress.value) /
+    100 *
+    video.duration;
+
 };
 
 
 /* ================= VOLUME ================= */
 
 volume.oninput = () => {
-  video.volume = Number(volume.value);
+
+  video.volume =
+    Number(volume.value);
+
+  video.muted = false;
+
+  muteBtn.textContent =
+    "🔊";
+
 };
+
 
 muteBtn.onclick = () => {
 
-  video.muted = !video.muted;
+  video.muted =
+    !video.muted;
 
   muteBtn.textContent =
-    video.muted ? "🔇" : "🔊";
+    video.muted
+      ? "🔇"
+      : "🔊";
+
 };
 
 
 /* ================= ASPECT ================= */
 
 aspect.onchange = () => {
-  video.style.objectFit = aspect.value;
+
+  video.style.objectFit =
+    aspect.value;
+
 };
 
 
-/* ================= ROTATE ================= */
+/* ================= ROTATION ================= */
 
 rotateBtn.onclick = () => {
 
-  rotation = (rotation + 90) % 360;
+  rotation =
+    (rotation + 90) % 360;
 
   video.style.transform =
     `rotate(${rotation}deg)`;
+
 };
 
 
 /* ================= FULLSCREEN ================= */
 
-fullscreenBtn.onclick = async () => {
+fullscreenBtn.onclick =
+  async () => {
 
-  try {
+    try {
 
-    if (!document.fullscreenElement) {
+      if (!document.fullscreenElement) {
 
-      await document.documentElement
-        .requestFullscreen();
+        if (player.requestFullscreen) {
 
-    } else {
+          await player.requestFullscreen();
 
-      await document.exitFullscreen();
+        } else if (
+          document.documentElement.requestFullscreen
+        ) {
+
+          await document.documentElement
+            .requestFullscreen();
+
+        }
+
+      } else {
+
+        await document.exitFullscreen();
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Fullscreen error:",
+        error
+      );
 
     }
 
-  } catch (e) {
-    console.log(e);
+  };
+
+
+document.addEventListener(
+  "fullscreenchange",
+  () => {
+
+    if (document.fullscreenElement) {
+
+      video.style.maxHeight =
+        "100vh";
+
+      document.body.style.overflow =
+        "hidden";
+
+    } else {
+
+      video.style.maxHeight =
+        "76vh";
+
+      document.body.style.overflow =
+        "";
+
+    }
+
   }
+);
+
+
+/* ================= PIP ================= */
+
+pipBtn.onclick = async () => {
+
+  try {
+
+    if (
+      document.pictureInPictureElement
+    ) {
+
+      await document.exitPictureInPicture();
+
+      return;
+
+    }
+
+    if (
+      document.pictureInPictureEnabled &&
+      video.requestPictureInPicture
+    ) {
+
+      await video.requestPictureInPicture();
+
+    } else {
+
+      setStatus(
+        "Picture-in-Picture is not supported by this browser."
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "PiP error:",
+      error
+    );
+
+  }
+
 };
 
 
@@ -207,45 +460,73 @@ fullscreenBtn.onclick = async () => {
 
 fileInput.onchange = () => {
 
-  const files = [...fileInput.files];
+  const files =
+    [...fileInput.files];
 
-  if (!files.length) return;
+  if (files.length) {
 
-  addFiles(files);
+    addFiles(files);
+
+  }
+
 };
 
 
 /* ================= DRAG DROP ================= */
 
-["dragenter","dragover"].forEach(event => {
+["dragenter", "dragover"]
+.forEach(eventName => {
 
-  dropZone.addEventListener(event, e => {
+  dropZone.addEventListener(
+    eventName,
+    event => {
 
-    e.preventDefault();
+      event.preventDefault();
 
-    dropZone.classList.add("active");
+      dropZone.classList.add(
+        "active"
+      );
 
-  });
+    }
+  );
+
 });
 
-["dragleave","drop"].forEach(event => {
 
-  dropZone.addEventListener(event, e => {
+["dragleave", "drop"]
+.forEach(eventName => {
 
-    e.preventDefault();
+  dropZone.addEventListener(
+    eventName,
+    event => {
 
-    dropZone.classList.remove("active");
+      event.preventDefault();
 
-  });
+      dropZone.classList.remove(
+        "active"
+      );
+
+    }
+  );
+
 });
 
-dropZone.addEventListener("drop", e => {
 
-  const files =
-    [...e.dataTransfer.files];
+dropZone.addEventListener(
+  "drop",
+  event => {
 
-  addFiles(files);
-});
+    const files =
+      [...event.dataTransfer.files];
+
+    if (files.length) {
+
+      addFiles(files);
+
+    }
+
+  }
+);
 
 
 /* ================= ADD FILES ================= */
@@ -255,9 +536,13 @@ function addFiles(files) {
   files.forEach(file => {
 
     queue.push({
+
       name: file.name,
-      file,
+
+      file: file,
+
       url: null
+
     });
 
   });
@@ -268,7 +553,14 @@ function addFiles(files) {
 
     playIndex(0);
 
+  } else {
+
+    setStatus(
+      `${files.length} file(s) added to playlist.`
+    );
+
   }
+
 }
 
 
@@ -280,186 +572,406 @@ async function playIndex(index) {
     index < 0 ||
     index >= queue.length
   ) {
+
     return;
+
   }
 
   currentIndex = index;
 
-  const item = queue[index];
+  const item =
+    queue[index];
 
-  currentFile = item.file;
+  currentFile =
+    item.file || null;
+
 
   if (currentURL) {
 
-    URL.revokeObjectURL(currentURL);
+    try {
+      URL.revokeObjectURL(
+        currentURL
+      );
+    } catch {}
 
     currentURL = null;
+
   }
+
 
   if (item.url) {
 
-    currentURL = item.url;
+    currentURL =
+      item.url;
 
-  } else {
+  } else if (item.file) {
 
     currentURL =
-      URL.createObjectURL(item.file);
+      URL.createObjectURL(
+        item.file
+      );
 
-    item.url = currentURL;
+    item.url =
+      currentURL;
+
   }
 
-  video.src = currentURL;
+
+  if (!currentURL) {
+
+    setStatus(
+      "Unable to load media."
+    );
+
+    return;
+
+  }
+
+
+  video.src =
+    currentURL;
 
   video.load();
+
+
+  video.playbackRate =
+    Number(speed.value);
+
 
   setStatus(
     "Loading: " + item.name
   );
 
-  video.play().catch(() => {});
 
   renderPlaylist();
+
+
+  try {
+
+    await video.play();
+
+  } catch {
+
+    /* Browser may block autoplay. */
+
+  }
+
 }
 
 
-/* ================= NEXT / PREVIOUS ================= */
+/* ================= NEXT ================= */
 
 nextBtn.onclick = () => {
 
-  if (!queue.length) return;
+  playNextSmart();
 
-  let next =
-    currentIndex + 1;
-
-  if (next >= queue.length) {
-    next = 0;
-  }
-
-  playIndex(next);
 };
+
+
+/* ================= PREVIOUS ================= */
 
 prevBtn.onclick = () => {
 
-  if (!queue.length) return;
+  if (!queue.length)
+    return;
 
-  let previous =
+
+  let index =
     currentIndex - 1;
 
-  if (previous < 0) {
-    previous = queue.length - 1;
+
+  if (index < 0) {
+
+    index =
+      queue.length - 1;
+
   }
 
-  playIndex(previous);
+
+  playIndex(index);
+
 };
 
 
-/* ================= AUTO NEXT ================= */
+/* ================= SMART NEXT ================= */
 
-video.addEventListener("ended", () => {
+function playNextSmart() {
 
-  if (!queue.length) return;
+  if (!queue.length)
+    return;
 
-  let next =
+
+  const mode =
+    repeatMode.value;
+
+
+  if (mode === "one") {
+
+    playIndex(currentIndex);
+
+    return;
+
+  }
+
+
+  if (
+    shuffleEnabled &&
+    queue.length > 1
+  ) {
+
+    let next;
+
+    do {
+
+      next =
+        Math.floor(
+          Math.random() *
+          queue.length
+        );
+
+    } while (
+      next === currentIndex
+    );
+
+    playIndex(next);
+
+    return;
+
+  }
+
+
+  const next =
     currentIndex + 1;
 
+
   if (next < queue.length) {
+
     playIndex(next);
+
+    return;
+
   }
-});
 
 
-/* ================= PLAYLIST UI ================= */
+  if (mode === "all") {
+
+    playIndex(0);
+
+    return;
+
+  }
+
+
+  setStatus(
+    "Playlist finished."
+  );
+
+}
+
+
+/* ================= END ================= */
+
+video.addEventListener(
+  "ended",
+  () => {
+
+    playNextSmart();
+
+  }
+);
+
+
+/* ================= PLAYLIST ================= */
 
 function renderPlaylist() {
 
   playlist.innerHTML = "";
 
-  queue.forEach((item, index) => {
 
-    const row =
-      document.createElement("div");
+  queue.forEach(
+    (item, index) => {
 
-    row.className = "item";
+      const row =
+        document.createElement("div");
 
-    if (index === currentIndex) {
-      row.classList.add("active");
-    }
+      row.className =
+        "item";
 
-    const name =
-      document.createElement("span");
 
-    name.className = "item-name";
+      if (
+        index === currentIndex
+      ) {
 
-    name.textContent =
-      `${index + 1}. ${item.name}`;
-
-    const play =
-      document.createElement("button");
-
-    play.textContent = "▶";
-
-    play.onclick = () => {
-      playIndex(index);
-    };
-
-    const remove =
-      document.createElement("button");
-
-    remove.textContent = "✕";
-
-    remove.onclick = () => {
-
-      queue.splice(index, 1);
-
-      if (index === currentIndex) {
-
-        currentIndex = -1;
-
-        video.removeAttribute("src");
-
-      } else if (index < currentIndex) {
-
-        currentIndex--;
+        row.classList.add(
+          "active"
+        );
 
       }
 
-      renderPlaylist();
-    };
 
-    row.appendChild(name);
-    row.appendChild(play);
-    row.appendChild(remove);
+      const name =
+        document.createElement("span");
 
-    playlist.appendChild(row);
-  });
+      name.className =
+        "item-name";
+
+      name.textContent =
+        `${index + 1}. ${item.name}`;
+
+
+      const play =
+        document.createElement("button");
+
+      play.textContent =
+        "▶";
+
+      play.title =
+        "Play";
+
+
+      play.onclick = () => {
+
+        playIndex(index);
+
+      };
+
+
+      const remove =
+        document.createElement("button");
+
+      remove.textContent =
+        "✕";
+
+      remove.title =
+        "Remove";
+
+
+      remove.onclick = () => {
+
+        if (
+          item.url &&
+          item.file
+        ) {
+
+          try {
+            URL.revokeObjectURL(
+              item.url
+            );
+          } catch {}
+
+        }
+
+
+        queue.splice(
+          index,
+          1
+        );
+
+
+        if (
+          index === currentIndex
+        ) {
+
+          currentIndex = -1;
+
+          video.pause();
+
+          video.removeAttribute(
+            "src"
+          );
+
+          video.load();
+
+
+          if (queue.length) {
+
+            playIndex(
+              Math.min(
+                index,
+                queue.length - 1
+              )
+            );
+
+          }
+
+        } else if (
+          index < currentIndex
+        ) {
+
+          currentIndex--;
+
+        }
+
+
+        renderPlaylist();
+
+      };
+
+
+      row.appendChild(name);
+
+      row.appendChild(play);
+
+      row.appendChild(remove);
+
+      playlist.appendChild(row);
+
+    }
+  );
+
 }
 
 
-/* ================= DIRECT URL ================= */
+/* ================= URL ================= */
 
 playUrlBtn.onclick = () => {
 
   const url =
     urlInput.value.trim();
 
+
   if (!url) {
 
-    setStatus("URL enter karo.");
+    setStatus(
+      "Video URL enter karo."
+    );
 
     return;
+
   }
+
 
   currentFile = null;
 
-  video.src = url;
+  currentIndex = -1;
+
+
+  if (currentURL) {
+
+    try {
+      URL.revokeObjectURL(
+        currentURL
+      );
+    } catch {}
+
+    currentURL = null;
+
+  }
+
+
+  video.src =
+    url;
 
   video.load();
+
 
   setStatus(
     "Direct URL loading..."
   );
 
+
   video.play().catch(() => {});
+
 };
 
 
@@ -469,10 +981,13 @@ function detectAudioTracks() {
 
   audioTracks.innerHTML = "";
 
+
   const defaultOption =
     document.createElement("option");
 
-  defaultOption.value = "-1";
+  defaultOption.value =
+    "-1";
+
   defaultOption.textContent =
     "Default";
 
@@ -480,9 +995,13 @@ function detectAudioTracks() {
     defaultOption
   );
 
+
   if (!video.audioTracks) {
+
     return;
+
   }
+
 
   for (
     let i = 0;
@@ -493,26 +1012,39 @@ function detectAudioTracks() {
     const track =
       video.audioTracks[i];
 
+
     const option =
       document.createElement("option");
 
-    option.value = i;
+    option.value =
+      String(i);
 
     option.textContent =
       track.label ||
       track.language ||
       `Audio ${i + 1}`;
 
-    audioTracks.appendChild(option);
+
+    audioTracks.appendChild(
+      option
+    );
+
   }
+
 }
+
 
 audioTracks.onchange = () => {
 
-  if (!video.audioTracks) return;
+  if (!video.audioTracks)
+    return;
+
 
   const selected =
-    Number(audioTracks.value);
+    Number(
+      audioTracks.value
+    );
+
 
   for (
     let i = 0;
@@ -520,122 +1052,194 @@ audioTracks.onchange = () => {
     i++
   ) {
 
-    video.audioTracks[i].enabled =
-      selected === -1
-        ? i === 0
-        : i === selected;
+    if (selected === -1) {
+
+      video.audioTracks[i].enabled =
+        i === 0;
+
+    } else {
+
+      video.audioTracks[i].enabled =
+        i === selected;
+
+    }
+
   }
+
 };
 
 
-/* ================= SUBTITLE FILE ================= */
+/* ================= SUBTITLE ================= */
 
-subtitleInput.onchange = async () => {
+subtitleInput.onchange =
+  async () => {
 
-  const file =
-    subtitleInput.files?.[0];
+    const file =
+      subtitleInput.files?.[0];
 
-  if (!file) return;
 
-  if (subtitleURL) {
-    URL.revokeObjectURL(subtitleURL);
-  }
+    if (!file)
+      return;
 
-  let text =
-    await file.text();
 
-  if (
-    file.name
-      .toLowerCase()
-      .endsWith(".srt")
-  ) {
+    if (subtitleURL) {
 
-    text = convertSRT(text);
-  }
+      URL.revokeObjectURL(
+        subtitleURL
+      );
 
-  subtitleURL =
-    URL.createObjectURL(
-      new Blob(
-        [text],
-        { type: "text/vtt" }
-      )
+    }
+
+
+    let text =
+      await file.text();
+
+
+    if (
+      file.name
+        .toLowerCase()
+        .endsWith(".srt")
+    ) {
+
+      text =
+        convertSRT(
+          text
+        );
+
+    }
+
+
+    subtitleURL =
+      URL.createObjectURL(
+        new Blob(
+          [text],
+          {
+            type:"text/vtt"
+          }
+        )
+      );
+
+
+    if (
+      subtitleTrackElement
+    ) {
+
+      subtitleTrackElement.remove();
+
+    }
+
+
+    subtitleTrackElement =
+      document.createElement(
+        "track"
+      );
+
+
+    subtitleTrackElement.kind =
+      "subtitles";
+
+    subtitleTrackElement.label =
+      file.name;
+
+    subtitleTrackElement.srclang =
+      "en";
+
+    subtitleTrackElement.src =
+      subtitleURL;
+
+
+    video.appendChild(
+      subtitleTrackElement
     );
 
-  if (subtitleTrack) {
-    subtitleTrack.remove();
-  }
 
-  subtitleTrack =
-    document.createElement("track");
-
-  subtitleTrack.kind =
-    "subtitles";
-
-  subtitleTrack.label =
-    file.name;
-
-  subtitleTrack.srclang =
-    "en";
-
-  subtitleTrack.src =
-    subtitleURL;
-
-  video.appendChild(
-    subtitleTrack
-  );
-
-  subtitleTrack.track.mode =
-    "showing";
-
-  const option =
-    document.createElement("option");
-
-  option.value = "external";
-  option.textContent =
-    file.name;
-
-  subtitleTracks.appendChild(
-    option
-  );
-
-  subtitleTracks.value =
-    "external";
-
-  setStatus(
-    "Subtitle loaded: " +
-    file.name
-  );
-};
+    subtitleTrackElement.track.mode =
+      "showing";
 
 
-/* ================= SUBTITLE ON/OFF ================= */
+    let found =
+      [...subtitleTracks.options]
+      .find(
+        option =>
+          option.value ===
+          "external"
+      );
+
+
+    if (!found) {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        "external";
+
+      option.textContent =
+        file.name;
+
+      subtitleTracks.appendChild(
+        option
+      );
+
+    }
+
+
+    subtitleTracks.value =
+      "external";
+
+
+    setStatus(
+      "Subtitle loaded: " +
+      file.name
+    );
+
+  };
+
+
+/* ================= SUBTITLE SELECT ================= */
 
 subtitleTracks.onchange = () => {
 
-  if (!video.textTracks) return;
+  if (!video.textTracks)
+    return;
+
 
   for (
     const track of video.textTracks
   ) {
 
-    track.mode = "hidden";
+    track.mode =
+      "hidden";
+
   }
+
 
   if (
     subtitleTracks.value ===
     "external"
   ) {
 
-    if (subtitleTrack?.track) {
-      subtitleTrack.track.mode =
+    if (
+      subtitleTrackElement?.track
+    ) {
+
+      subtitleTrackElement.track.mode =
         "showing";
+
     }
 
     return;
+
   }
 
+
   const index =
-    Number(subtitleTracks.value);
+    Number(
+      subtitleTracks.value
+    );
+
 
   if (
     index >= 0 &&
@@ -644,7 +1248,9 @@ subtitleTracks.onchange = () => {
 
     video.textTracks[index].mode =
       "showing";
+
   }
+
 };
 
 
@@ -652,179 +1258,585 @@ subtitleTracks.onchange = () => {
 
 subtitleSize.onchange = () => {
 
-  const size =
-    subtitleSize.value;
-
-  const style =
+  let style =
     document.getElementById(
       "subtitleStyle"
     );
 
+
   if (style) {
+
     style.remove();
+
   }
 
-  const css =
-    document.createElement("style");
 
-  css.id =
+  style =
+    document.createElement(
+      "style"
+    );
+
+
+  style.id =
     "subtitleStyle";
 
-  css.textContent = `
+
+  style.textContent = `
     video::cue {
-      font-size: ${size};
-      background: rgba(0,0,0,.75);
-      color: white;
+      font-size:${subtitleSize.value};
+      background:rgba(0,0,0,.75);
+      color:white;
     }
   `;
 
-  document.head.appendChild(css);
+
+  document.head.appendChild(
+    style
+  );
+
 };
 
 
-/* ================= SRT -> VTT ================= */
+/* ================= SRT ================= */
 
 function convertSRT(text) {
 
-  let result =
-    text.replace(/\r/g, "");
+  return (
+    "WEBVTT\n\n" +
+    text
+      .replace(/\r/g, "")
+      .replace(
+        /(\d{2}:\d{2}:\d{2}),(\d{3})/g,
+        "$1.$2"
+      )
+  );
 
-  result =
-    result.replace(
-      /(\d{2}:\d{2}:\d{2}),(\d{3})/g,
-      "$1.$2"
-    );
-
-  return "WEBVTT\n\n" + result;
 }
 
 
-/* ================= FFMPEG FALLBACK ================= */
+/* ================= REPEAT ================= */
 
-video.addEventListener(
-  "error",
-  async () => {
+repeatMode.onchange = () => {
 
-    if (!currentFile) return;
+  setStatus(
+    "Repeat: " +
+    repeatMode.options[
+      repeatMode.selectedIndex
+    ].text
+  );
 
-    setStatus(
-      "Unsupported format detected. FFmpeg starting..."
+};
+
+
+/* ================= SHUFFLE ================= */
+
+shuffleBtn.onclick = () => {
+
+  shuffleEnabled =
+    !shuffleEnabled;
+
+
+  shuffleBtn.textContent =
+    shuffleEnabled
+      ? "🔀 Shuffle ON"
+      : "🔀 Shuffle";
+
+
+  setStatus(
+    shuffleEnabled
+      ? "Shuffle enabled."
+      : "Shuffle disabled."
+  );
+
+};
+
+
+/* ================= RESUME ================= */
+
+const resumePositions =
+  JSON.parse(
+    localStorage.getItem(
+      "vp_resume_positions"
+    ) || "{}"
+  );
+
+
+function resumeKey(item) {
+
+  if (!item)
+    return null;
+
+
+  if (item.file) {
+
+    return [
+      item.name,
+      item.file.size,
+      item.file.lastModified
+    ].join("_");
+
+  }
+
+
+  return item.url ||
+    item.name ||
+    null;
+
+}
+
+
+function saveResumePosition() {
+
+  if (
+    currentIndex < 0 ||
+    !queue[currentIndex]
+  ) {
+
+    return;
+
+  }
+
+
+  const key =
+    resumeKey(
+      queue[currentIndex]
     );
 
-    try {
 
-      ffmpegBox.style.display =
-        "block";
+  if (!key)
+    return;
 
-      ffmpegProgress.value = 0;
-      ffmpegText.textContent =
-        "0%";
 
-      await getFFmpeg(
-        value => {
+  resumePositions[key] =
+    video.currentTime;
 
-          ffmpegProgress.value =
-            value;
 
-          ffmpegText.textContent =
-            value + "%";
+  localStorage.setItem(
+    "vp_resume_positions",
+    JSON.stringify(
+      resumePositions
+    )
+  );
 
-        }
-      );
+}
 
-      const blob =
-        await transcodeVideo(
-          currentFile,
-          value => {
 
-            ffmpegProgress.value =
-              value;
+function restoreResumePosition() {
 
-            ffmpegText.textContent =
-              value + "%";
+  if (
+    currentIndex < 0 ||
+    !queue[currentIndex]
+  ) {
 
-          }
-        );
+    return;
 
-      if (currentURL) {
-        URL.revokeObjectURL(
-          currentURL
-        );
-      }
+  }
 
-      currentURL =
-        URL.createObjectURL(blob);
 
-      video.src =
-        currentURL;
+  const key =
+    resumeKey(
+      queue[currentIndex]
+    );
 
-      video.load();
 
-      setStatus(
-        "FFmpeg conversion complete."
-      );
+  const saved =
+    resumePositions[key];
 
-      video.play().catch(() => {});
 
-      setTimeout(() => {
-        ffmpegBox.style.display =
-          "none";
-      }, 1000);
+  if (
+    Number.isFinite(saved) &&
+    saved > 5 &&
+    Number.isFinite(video.duration) &&
+    saved < video.duration - 5
+  ) {
 
-    } catch (error) {
+    video.currentTime =
+      saved;
 
-      console.error(error);
+    setStatus(
+      "Resumed from " +
+      formatTime(saved)
+    );
 
-      ffmpegBox.style.display =
-        "none";
+  }
 
-      setStatus(
-        "File could not be played."
-      );
-    }
+}
+
+
+video.addEventListener(
+  "loadedmetadata",
+  () => {
+
+    setTimeout(
+      restoreResumePosition,
+      100
+    );
+
   }
 );
+
+
+/* ================= MOBILE DOUBLE TAP ================= */
+
+video.addEventListener(
+  "touchend",
+  event => {
+
+    if (screenLocked)
+      return;
+
+
+    const now =
+      Date.now();
+
+
+    const difference =
+      now - lastTap;
+
+
+    const touch =
+      event.changedTouches[0];
+
+
+    const x =
+      touch.clientX;
+
+
+    const width =
+      video.clientWidth;
+
+
+    if (
+      difference < 300
+    ) {
+
+      if (
+        x < width / 2
+      ) {
+
+        video.currentTime =
+          Math.max(
+            0,
+            video.currentTime - 10
+          );
+
+        showMessage(
+          "⏪ -10"
+        );
+
+      } else {
+
+        video.currentTime =
+          Math.min(
+            video.duration || Infinity,
+            video.currentTime + 10
+          );
+
+        showMessage(
+          "⏩ +10"
+        );
+
+      }
+
+    }
+
+
+    lastTap =
+      now;
+
+  }
+);
+
+
+/* ================= TOUCH SWIPE ================= */
+
+video.addEventListener(
+  "touchstart",
+  event => {
+
+    if (screenLocked)
+      return;
+
+
+    const touch =
+      event.touches[0];
+
+
+    touchStartX =
+      touch.clientX;
+
+    touchStartY =
+      touch.clientY;
+
+    touchStartTime =
+      video.currentTime;
+
+  },
+  {passive:true}
+);
+
+
+video.addEventListener(
+  "touchmove",
+  event => {
+
+    if (screenLocked)
+      return;
+
+
+    const touch =
+      event.touches[0];
+
+
+    const dx =
+      touch.clientX -
+      touchStartX;
+
+
+    const dy =
+      touch.clientY -
+      touchStartY;
+
+
+    if (
+      Math.abs(dx) >
+      Math.abs(dy) &&
+      Math.abs(dx) > 20
+    ) {
+
+      const seek =
+        dx /
+        video.clientWidth *
+        60;
+
+
+      video.currentTime =
+        Math.max(
+          0,
+          Math.min(
+            video.duration || Infinity,
+            touchStartTime + seek
+          )
+        );
+
+
+      showMessage(
+        "⏩ " +
+        (seek >= 0 ? "+" : "") +
+        Math.round(seek) +
+        "s"
+      );
+
+    }
+
+  },
+  {passive:true}
+);
+
+
+/* ================= TOUCH VOLUME ================= */
+
+function handleVerticalVolume(dy) {
+
+  const change =
+    -dy /
+    Math.max(
+      video.clientHeight,
+      1
+    );
+
+
+  video.volume =
+    Math.max(
+      0,
+      Math.min(
+        1,
+        video.volume + change
+      )
+    );
+
+
+  volume.value =
+    video.volume;
+
+
+  video.muted =
+    false;
+
+
+  muteBtn.textContent =
+    "🔊";
+
+
+  showMessage(
+    "🔊 " +
+    Math.round(
+      video.volume * 100
+    ) +
+    "%"
+  );
+
+}
+
+
+/* ================= DESKTOP DOUBLE CLICK ================= */
+
+video.addEventListener(
+  "dblclick",
+  event => {
+
+    if (screenLocked)
+      return;
+
+
+    const rect =
+      video.getBoundingClientRect();
+
+
+    const x =
+      event.clientX -
+      rect.left;
+
+
+    if (
+      x < rect.width / 2
+    ) {
+
+      video.currentTime =
+        Math.max(
+          0,
+          video.currentTime - 10
+        );
+
+      showMessage(
+        "⏪ -10"
+      );
+
+    } else {
+
+      video.currentTime =
+        Math.min(
+          video.duration || Infinity,
+          video.currentTime + 10
+        );
+
+      showMessage(
+        "⏩ +10"
+      );
+
+    }
+
+  }
+);
+
+
+/* ================= SCREEN LOCK ================= */
+
+lockBtn.onclick = () => {
+
+  screenLocked =
+    !screenLocked;
+
+
+  if (screenLocked) {
+
+    lockBtn.textContent =
+      "🔓 Unlock";
+
+    player.classList.add(
+      "locked"
+    );
+
+    setStatus(
+      "Controls locked."
+    );
+
+  } else {
+
+    lockBtn.textContent =
+      "🔒 Lock";
+
+    player.classList.remove(
+      "locked"
+    );
+
+    setStatus(
+      "Controls unlocked."
+    );
+
+  }
+
+};
 
 
 /* ================= KEYBOARD ================= */
 
 document.addEventListener(
   "keydown",
-  e => {
+  event => {
+
+    if (screenLocked)
+      return;
+
 
     const tag =
       document.activeElement?.tagName;
+
 
     if (
       tag === "INPUT" ||
       tag === "SELECT" ||
       tag === "TEXTAREA"
-    ) return;
+    ) {
 
-    switch (e.key) {
+      return;
+
+    }
+
+
+    switch(event.key) {
 
       case " ":
-        e.preventDefault();
+
+        event.preventDefault();
+
         playBtn.click();
+
         break;
 
+
       case "ArrowLeft":
+
         video.currentTime =
           Math.max(
             0,
             video.currentTime - 5
           );
+
+        showMessage(
+          "⏪ -5"
+        );
+
         break;
 
+
       case "ArrowRight":
+
         video.currentTime =
           Math.min(
             video.duration || Infinity,
             video.currentTime + 5
           );
+
+        showMessage(
+          "⏩ +5"
+        );
+
         break;
 
+
       case "ArrowUp":
+
         video.volume =
           Math.min(
             1,
@@ -833,9 +1845,12 @@ document.addEventListener(
 
         volume.value =
           video.volume;
+
         break;
 
+
       case "ArrowDown":
+
         video.volume =
           Math.max(
             0,
@@ -844,68 +1859,246 @@ document.addEventListener(
 
         volume.value =
           video.volume;
+
         break;
+
 
       case "f":
       case "F":
+
         fullscreenBtn.click();
+
         break;
+
 
       case "m":
       case "M":
+
         muteBtn.click();
+
         break;
+
 
       case "n":
       case "N":
+
         nextBtn.click();
+
         break;
+
 
       case "p":
       case "P":
+
         prevBtn.click();
+
         break;
+
+
+      case "l":
+      case "L":
+
+        lockBtn.click();
+
+        break;
+
     }
+
   }
 );
 
 
-/* ================= TIME ================= */
+/* ================= NATIVE ERROR ================= */
+
+video.addEventListener(
+  "error",
+  async () => {
+
+    if (
+      !currentFile ||
+      isTranscoding
+    ) {
+
+      setStatus(
+        "Unable to play this media."
+      );
+
+      return;
+
+    }
+
+
+    isTranscoding =
+      true;
+
+
+    setStatus(
+      "Browser couldn't play this file. FFmpeg fallback starting..."
+    );
+
+
+    ffmpegBox.style.display =
+      "block";
+
+
+    ffmpegProgress.value =
+      0;
+
+    ffmpegText.textContent =
+      "0%";
+
+
+    try {
+
+      await getFFmpeg(
+        percent => {
+
+          ffmpegProgress.value =
+            percent;
+
+          ffmpegText.textContent =
+            percent + "%";
+
+        }
+      );
+
+
+      const blob =
+        await transcodeVideo(
+          currentFile,
+          percent => {
+
+            ffmpegProgress.value =
+              percent;
+
+            ffmpegText.textContent =
+              percent + "%";
+
+          }
+        );
+
+
+      if (currentURL) {
+
+        try {
+
+          URL.revokeObjectURL(
+            currentURL
+          );
+
+        } catch {}
+
+      }
+
+
+      currentURL =
+        URL.createObjectURL(
+          blob
+        );
+
+
+      video.src =
+        currentURL;
+
+      video.load();
+
+
+      setStatus(
+        "FFmpeg conversion complete."
+      );
+
+
+      video.play().catch(() => {});
+
+
+      setTimeout(
+        () => {
+
+          ffmpegBox.style.display =
+            "none";
+
+        },
+        1000
+      );
+
+
+    } catch(error) {
+
+      console.error(
+        "FFmpeg error:",
+        error
+      );
+
+
+      ffmpegBox.style.display =
+        "none";
+
+
+      setStatus(
+        "This file could not be played."
+      );
+
+    } finally {
+
+      isTranscoding =
+        false;
+
+    }
+
+  }
+);
+
+
+/* ================= TIME FORMAT ================= */
 
 function formatTime(seconds) {
 
-  if (!Number.isFinite(seconds)) {
+  if (
+    !Number.isFinite(seconds)
+  ) {
+
     return "00:00";
+
   }
 
-  const h =
-    Math.floor(seconds / 3600);
 
-  const m =
+  const hours =
+    Math.floor(
+      seconds / 3600
+    );
+
+
+  const minutes =
     Math.floor(
       (seconds % 3600) / 60
     );
 
-  const s =
-    Math.floor(seconds % 60);
 
-  if (h > 0) {
+  const secs =
+    Math.floor(
+      seconds % 60
+    );
+
+
+  if (hours > 0) {
 
     return (
-      String(h).padStart(2,"0") +
+      String(hours).padStart(2,"0") +
       ":" +
-      String(m).padStart(2,"0") +
+      String(minutes).padStart(2,"0") +
       ":" +
-      String(s).padStart(2,"0")
+      String(secs).padStart(2,"0")
     );
 
   }
 
+
   return (
-    String(m).padStart(2,"0") +
+    String(minutes).padStart(2,"0") +
     ":" +
-    String(s).padStart(2,"0")
+    String(secs).padStart(2,"0")
   );
+
 }
 
 
@@ -913,4 +2106,6 @@ function formatTime(seconds) {
 
 renderPlaylist();
 
-setStatus("Ready");
+setStatus(
+  "Ready"
+);
