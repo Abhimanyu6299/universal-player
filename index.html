@@ -1,656 +1,351 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <meta name="theme-color" content="#050505">
-  <title>Universal Player</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>Universal Player</title>
 
-  <!-- HLS quality/audio support -->
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#050505;color:#fff;font-family:Arial,Helvetica,sans-serif}
+body{min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer}
 
-  <style>
-    :root{
-      --bg:#050505;
-      --panel:#101010;
-      --panel2:#171717;
-      --border:#292929;
-      --text:#f4f4f4;
-      --muted:#999;
-      --accent:#1687ff;
-      --danger:#ff4545;
-    }
+.app{max-width:1400px;margin:auto;padding:14px}
 
-    *{
-      box-sizing:border-box;
-      -webkit-tap-highlight-color:transparent;
-    }
+header{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:10px;margin-bottom:12px
+}
+.logo{font-size:22px;font-weight:800}
+.headerBtns{display:flex;gap:8px}
 
-    html,body{
-      margin:0;
-      padding:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:Arial,Helvetica,sans-serif;
-    }
+.btn{
+ background:#181818;color:#fff;border:1px solid #333;
+ border-radius:10px;padding:9px 13px
+}
+.btn:hover{background:#242424}
 
-    body{
-      min-height:100vh;
-    }
+.player{
+ position:relative;background:#000;border-radius:14px;
+ overflow:hidden;width:100%;aspect-ratio:16/9;
+ display:flex;align-items:center;justify-content:center
+}
 
-    button,
-    input,
-    select{
-      font:inherit;
-    }
+video{
+ width:100%;height:100%;display:block;
+ background:#000
+}
 
-    button{
-      cursor:pointer;
-    }
+.audioScreen{
+ position:absolute;inset:0;display:none;
+ align-items:center;justify-content:center;
+ font-size:70px;background:#080808
+}
 
-    .app{
-      width:100%;
-      max-width:1500px;
-      margin:auto;
-      padding:12px;
-    }
+.overlay{
+ position:absolute;inset:0;pointer-events:none;
+ display:flex;align-items:center;justify-content:center
+}
+.centerPlay{
+ pointer-events:auto;width:70px;height:70px;border-radius:50%;
+ border:0;background:#ffffffdd;color:#000;font-size:30px
+}
 
-    header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
+.controls{
+ background:#111;border:1px solid #252525;
+ border-radius:12px;padding:10px;margin-top:10px
+}
 
-    header h1{
-      font-size:20px;
-      margin:0;
-    }
+.progress{
+ width:100%;height:6px;accent-color:#fff;
+ cursor:pointer
+}
 
-    .header-buttons{
-      display:flex;
-      gap:7px;
-    }
+.row{
+ display:flex;align-items:center;gap:7px;
+ flex-wrap:wrap;margin-top:9px
+}
 
-    .btn{
-      background:#171717;
-      color:#fff;
-      border:1px solid #333;
-      border-radius:8px;
-      padding:9px 12px;
-    }
+.controlBtn{
+ background:#191919;color:#fff;border:1px solid #303030;
+ border-radius:8px;padding:8px 10px;min-width:42px
+}
 
-    .btn:hover{
-      background:#222;
-    }
+.controlBtn:hover{background:#292929}
 
-    .player-wrap{
-      width:100%;
-      aspect-ratio:16/9;
-      min-height:220px;
-      background:#000;
-      border:1px solid #262626;
-      border-radius:10px;
-      overflow:hidden;
-      position:relative;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
+.time{font-size:13px;color:#bbb;min-width:100px}
 
-    .player-wrap:fullscreen{
-      width:100vw;
-      height:100vh;
-      aspect-ratio:auto;
-      border:0;
-      border-radius:0;
-      background:#000;
-    }
+input[type=range]{accent-color:#fff}
+.range{width:120px}
 
-    video{
-      width:100%;
-      height:100%;
-      background:#000;
-      display:block;
-      object-fit:contain;
-      transform-origin:center center;
-    }
+.panel{
+ margin-top:12px;background:#0d0d0d;
+ border:1px solid #252525;border-radius:12px;padding:12px
+}
 
-    #ytBox{
-      width:100%;
-      height:100%;
-      display:none;
-      background:#000;
-    }
+.panel h3{margin:0 0 10px;font-size:15px}
 
-    #ytPlayer{
-      width:100%;
-      height:100%;
-    }
+.urlRow{display:flex;gap:8px}
+.urlRow input{
+ flex:1;min-width:0;background:#151515;color:#fff;
+ border:1px solid #333;border-radius:9px;padding:11px
+}
 
-    .subtitle-overlay{
-      position:absolute;
-      left:4%;
-      right:4%;
-      bottom:8%;
-      text-align:center;
-      pointer-events:none;
-      color:white;
-      text-shadow:
-        2px 2px 3px #000,
-        -2px -2px 3px #000,
-        0 0 5px #000;
-      font-size:100%;
-      line-height:1.35;
-      z-index:5;
-    }
+.fileDrop{
+ border:1px dashed #444;border-radius:10px;
+ padding:18px;text-align:center;color:#aaa;margin-top:10px
+}
 
-    .drop-zone{
-      margin-top:10px;
-      padding:20px;
-      border:1px dashed #555;
-      border-radius:10px;
-      text-align:center;
-      background:#0c0c0c;
-    }
+.settings{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+ gap:10px
+}
 
-    .drop-zone.drag{
-      border-color:var(--accent);
-      background:#071321;
-    }
+.setting{
+ background:#141414;border:1px solid #282828;
+ border-radius:10px;padding:10px
+}
 
-    .url-row{
-      display:flex;
-      gap:7px;
-      margin-top:8px;
-    }
+.settingTop{
+ display:flex;justify-content:space-between;
+ align-items:center;margin-bottom:8px
+}
+.settingTop b{font-size:13px}
+.value{font-size:12px;color:#aaa}
 
-    .url-row input{
-      flex:1;
-      min-width:0;
-    }
+.adjust{
+ display:flex;align-items:center;gap:6px
+}
+.adjust button{
+ width:34px;height:34px;background:#202020;color:#fff;
+ border:1px solid #333;border-radius:7px
+}
+.adjust input{flex:1}
 
-    input[type="text"],
-    input[type="number"],
-    select{
-      width:100%;
-      min-height:42px;
-      background:#080808;
-      color:#fff;
-      border:1px solid #3a3a3a;
-      border-radius:7px;
-      padding:8px 10px;
-      outline:none;
-    }
+select{
+ background:#171717;color:#fff;border:1px solid #333;
+ border-radius:8px;padding:8px;width:100%
+}
 
-    input[type="text"]:focus,
-    input[type="number"]:focus,
-    select:focus{
-      border-color:var(--accent);
-    }
+.queue{
+ max-height:230px;overflow:auto
+}
+.item{
+ padding:9px;border-bottom:1px solid #222;
+ cursor:pointer;display:flex;justify-content:space-between;gap:8px
+}
+.item:hover{background:#181818}
 
-    .controls{
-      margin-top:10px;
-      background:#0d0d0d;
-      border:1px solid #292929;
-      border-radius:10px;
-      padding:10px;
-    }
+.status{
+ margin-top:10px;color:#aaa;font-size:13px;
+ min-height:18px
+}
 
-    .control-line{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      flex-wrap:wrap;
-    }
+.info{
+ color:#888;font-size:12px;line-height:1.5;
+ margin-top:8px;word-break:break-all
+}
 
-    .control-line button{
-      min-width:42px;
-      min-height:40px;
-      background:#171717;
-      color:#fff;
-      border:1px solid #333;
-      border-radius:7px;
-      padding:6px 10px;
-    }
+.hidden{display:none!important}
 
-    .control-line button:hover{
-      background:#252525;
-    }
-
-    .progress-row{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin:5px 0 10px;
-    }
-
-    #progress{
-      flex:1;
-      min-width:0;
-    }
-
-    .time{
-      white-space:nowrap;
-      font-size:14px;
-      color:#ddd;
-    }
-
-    input[type="range"]{
-      accent-color:#1687ff;
-      width:100%;
-    }
-
-    .main-settings{
-      display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:8px;
-      margin-top:10px;
-    }
-
-    .setting-card{
-      background:#111;
-      border:1px solid #292929;
-      border-radius:9px;
-      padding:10px;
-    }
-
-    .setting-card label{
-      display:block;
-      color:#aaa;
-      font-size:13px;
-      margin-bottom:5px;
-    }
-
-    .value-control{
-      display:flex;
-      align-items:center;
-      gap:5px;
-    }
-
-    .value-control input,
-    .value-control select{
-      flex:1;
-      min-width:0;
-    }
-
-    .small-btn{
-      width:40px;
-      height:40px;
-      flex:0 0 40px;
-      background:#181818;
-      color:#fff;
-      border:1px solid #333;
-      border-radius:7px;
-      font-size:20px;
-    }
-
-    .value{
-      min-width:65px;
-      text-align:center;
-      color:#fff;
-      font-weight:bold;
-      font-size:14px;
-    }
-
-    .section{
-      margin-top:10px;
-      background:#0d0d0d;
-      border:1px solid #292929;
-      border-radius:10px;
-      padding:10px;
-    }
-
-    .section h2{
-      margin:0 0 9px;
-      font-size:16px;
-    }
-
-    .file-row{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
-    .file-row input[type="file"]{
-      max-width:100%;
-    }
-
-    #queue,
-    #history{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-
-    .item{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      padding:8px;
-      border:1px solid #282828;
-      border-radius:7px;
-      background:#101010;
-    }
-
-    .item-title{
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-
-    .item button{
-      background:#191919;
-      color:white;
-      border:1px solid #333;
-      border-radius:6px;
-      padding:6px 8px;
-    }
-
-    #status{
-      margin-top:10px;
-      color:#aaa;
-      font-size:13px;
-      min-height:20px;
-    }
-
-    .hidden{
-      display:none!important;
-    }
-
-    .locked .player-wrap{
-      pointer-events:none;
-    }
-
-    .info{
-      color:#888;
-      font-size:12px;
-      line-height:1.5;
-      margin-top:6px;
-    }
-
-    @media(max-width:900px){
-      .main-settings{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-      }
-    }
-
-    @media(max-width:600px){
-      .app{
-        padding:7px;
-      }
-
-      header h1{
-        font-size:17px;
-      }
-
-      .main-settings{
-        grid-template-columns:1fr;
-      }
-
-      .control-line button{
-        min-width:39px;
-        min-height:38px;
-        padding:5px 8px;
-      }
-
-      .player-wrap{
-        min-height:190px;
-      }
-
-      .url-row{
-        flex-direction:column;
-      }
-
-      .subtitle-overlay{
-        bottom:10%;
-      }
-    }
-
-    @media(min-width:1400px){
-      .app{
-        max-width:1700px;
-      }
-    }
-  </style>
+@media(max-width:600px){
+ .app{padding:8px}
+ .player{border-radius:9px}
+ .controlBtn{padding:7px 8px}
+ .range{width:90px}
+ .logo{font-size:18px}
+}
+</style>
 </head>
 
 <body>
 <div class="app">
 
-  <header>
-    <h1>🎬 Universal Player</h1>
+<header>
+ <div class="logo">Universal Player</div>
+ <div class="headerBtns">
+  <button class="btn" id="openBtn">Open</button>
+  <button class="btn" id="fullscreenBtn">⛶</button>
+ </div>
+</header>
 
-    <div class="header-buttons">
-      <button class="btn" id="openBtn">📁 Open</button>
-      <button class="btn" id="fullscreenBtn">⛶ Fullscreen</button>
-    </div>
-  </header>
+<div class="player" id="playerWrap">
+ <video id="video" playsinline preload="metadata"></video>
+ <div class="audioScreen" id="audioScreen">🎵</div>
 
-  <div id="playerWrap" class="player-wrap">
+ <div class="overlay">
+  <button class="centerPlay" id="centerPlay">▶</button>
+ </div>
+</div>
 
-    <video
-      id="video"
-      playsinline
-      preload="metadata"
-      crossorigin="anonymous">
-    </video>
+<div class="controls">
+ <input id="progress" class="progress" type="range" min="0" max="1000" value="0">
 
-    <div id="ytBox">
-      <div id="ytPlayer"></div>
-    </div>
+ <div class="row">
+  <button class="controlBtn" id="prevBtn">⏮</button>
+  <button class="controlBtn" id="backBtn">−10</button>
+  <button class="controlBtn" id="playBtn">▶</button>
+  <button class="controlBtn" id="forwardBtn">+10</button>
+  <button class="controlBtn" id="nextBtn">⏭</button>
 
-    <div id="subtitleOverlay" class="subtitle-overlay"></div>
+  <span class="time" id="time">00:00 / 00:00</span>
+
+  <button class="controlBtn" id="muteBtn">🔊</button>
+  <input class="range" id="volume" type="range" min="0" max="100" value="100">
+
+  <button class="controlBtn" id="pipBtn">PiP</button>
+  <button class="controlBtn" id="stopBtn">■</button>
+ </div>
+</div>
+
+<div class="panel">
+ <h3>Direct Video URL</h3>
+
+ <div class="urlRow">
+  <input id="urlInput"
+   placeholder="Paste MP4 / WebM / M3U8 video URL">
+  <button class="btn" id="urlPlayBtn">Play</button>
+ </div>
+
+ <div class="fileDrop" id="drop">
+  Drop video/audio file here
+  <br>
+  <button class="btn" id="fileBtn" style="margin-top:8px">Choose File</button>
+  <input id="fileInput" type="file"
+   accept="video/*,audio/*,.mkv,.avi,.mov,.wmv,.flv,.ts,.m4v,.webm,.mp4,.mp3,.wav,.aac,.flac,.ogg"
+   multiple hidden>
+ </div>
+
+ <div class="status" id="status"></div>
+</div>
+
+<div class="panel">
+ <h3>Playback</h3>
+
+ <div class="settings">
+
+  <div class="setting">
+   <div class="settingTop">
+    <b>Speed</b><span class="value" id="speedValue">1.00×</span>
+   </div>
+   <select id="speed">
+    <option value="0.25">0.25×</option>
+    <option value="0.50">0.50×</option>
+    <option value="0.75">0.75×</option>
+    <option value="1" selected>1.00×</option>
+    <option value="1.25">1.25×</option>
+    <option value="1.5">1.50×</option>
+    <option value="1.75">1.75×</option>
+    <option value="2">2.00×</option>
+    <option value="2.5">2.50×</option>
+    <option value="3">3.00×</option>
+    <option value="4">4.00×</option>
+   </select>
   </div>
 
-  <div class="drop-zone" id="dropZone">
-    📂 Drag & Drop Video / Audio Here
-    <br>
-    <small>Local file ya direct media URL use karo</small>
-
-    <div class="file-row" style="margin-top:10px">
-      <input id="fileInput" type="file"
-        accept="video/*,audio/*,.mkv,.avi,.mov,.mp4,.webm,.m4v,.ts,.m2ts,.flv,.wmv,.mp3,.aac,.flac,.wav,.ogg,.opus,.m4a">
-    </div>
+  <div class="setting">
+   <div class="settingTop">
+    <b>Quality</b>
+    <span class="value" id="qualityValue">Auto</span>
+   </div>
+   <select id="quality">
+    <option value="-1">Auto</option>
+   </select>
   </div>
 
-  <div class="url-row">
-    <input id="urlInput" type="text"
-      placeholder="Direct video/audio URL ya YouTube URL paste karo">
-    <button class="btn" id="playUrlBtn">▶ Play URL</button>
+  <div class="setting">
+   <div class="settingTop">
+    <b>Aspect Ratio</b>
+   </div>
+   <select id="aspect">
+    <option value="contain">Best Fit</option>
+    <option value="contain">Fit Screen</option>
+    <option value="cover">Fill</option>
+    <option value="stretch">Stretch</option>
+    <option value="16:9">16:9</option>
+    <option value="4:3">4:3</option>
+    <option value="16:10">16:10</option>
+    <option value="2:1">2:1</option>
+    <option value="2.21:1">2.21:1</option>
+    <option value="2.35:1">2.35:1</option>
+    <option value="2.39:1">2.39:1</option>
+    <option value="5:4">5:4</option>
+    <option value="center">Center</option>
+   </select>
   </div>
 
-  <div class="controls">
+ </div>
+</div>
 
-    <div class="progress-row">
-      <span class="time" id="currentTime">00:00</span>
-      <input id="progress" type="range" min="0" max="1000" value="0">
-      <span class="time" id="duration">00:00</span>
-    </div>
+<div class="panel">
+ <h3>Video Settings</h3>
 
-    <div class="control-line">
+ <div class="settings">
 
-      <button id="prevBtn" title="Previous">⏮</button>
-      <button id="backBtn" title="-10 seconds">-10</button>
-      <button id="playBtn" title="Play/Pause">▶</button>
-      <button id="forwardBtn" title="+10 seconds">+10</button>
-      <button id="nextBtn" title="Next">⏭</button>
-
-      <button id="muteBtn" title="Mute">🔊</button>
-
-      <button id="frameBackBtn" title="Previous frame">◀|</button>
-      <button id="frameNextBtn" title="Next frame">|▶</button>
-
-      <button id="rotateBtn" title="Rotate">🔄</button>
-      <button id="pipBtn" title="Picture in Picture">▣ PiP</button>
-      <button id="lockBtn" title="Lock player">🔒</button>
-      <button id="stopBtn" title="Stop">⏹</button>
-
-      <button id="settingsBtn">⚙ Settings</button>
-    </div>
-
+  <div class="setting">
+   <div class="settingTop">
+    <b>Brightness</b><span class="value" id="brightnessValue">100%</span>
+   </div>
+   <div class="adjust">
+    <button data-adjust="brightness" data-dir="-1">−</button>
+    <input id="brightness" type="range" min="0" max="200" value="100">
+    <button data-adjust="brightness" data-dir="1">+</button>
+   </div>
   </div>
 
-  <div id="settingsPanel" class="main-settings">
-
-    <div class="setting-card">
-      <label>Speed</label>
-      <div class="value-control">
-        <button class="small-btn" data-action="minus" data-target="speed">−</button>
-        <select id="speed"></select>
-        <button class="small-btn" data-action="plus" data-target="speed">+</button>
-      </div>
-    </div>
-
-    <div class="setting-card">
-      <label>Volume</label>
-      <div class="value-control">
-        <button class="small-btn" data-action="minus" data-target="volume">−</button>
-        <span id="volumeValue" class="value">100%</span>
-        <button class="small-btn" data-action="plus" data-target="volume">+</button>
-      </div>
-      <input id="volume" type="range" min="0" max="100" step="1" value="100">
-    </div>
-
-    <div class="setting-card">
-      <label>Brightness</label>
-      <div class="value-control">
-        <button class="small-btn" data-action="minus" data-target="brightness">−</button>
-        <span id="brightnessValue" class="value">100%</span>
-        <button class="small-btn" data-action="plus" data-target="brightness">+</button>
-      </div>
-      <input id="brightness" type="range" min="0" max="200" step="1" value="100">
-    </div>
-
-    <div class="setting-card">
-      <label>Contrast</label>
-      <div class="value-control">
-        <button class="small-btn" data-action="minus" data-target="contrast">−</button>
-        <span id="contrastValue" class="value">100%</span>
-        <button class="small-btn" data-action="plus" data-target="contrast">+</button>
-      </div>
-      <input id="contrast" type="range" min="0" max="200" step="1" value="100">
-    </div>
-
-    <div class="setting-card">
-      <label>Saturation</label>
-      <div class="value-control">
-        <button class="small-btn" data-action="minus" data-target="saturation">−</button>
-        <span id="saturationValue" class="value">100%</span>
-        <button class="small-btn" data-action="plus" data-target="saturation">+</button>
-      </div>
-      <input id="saturation" type="range" min="0" max="200" step="1" value="100">
-    </div>
-
-    <div class="setting-card">
-      <label>Subtitle Size</label>
-      <div class="value-control">
-        <button class="small-btn" data-action="minus" data-target="subtitleSize">−</button>
-        <span id="subtitleSizeValue" class="value">100%</span>
-        <button class="small-btn" data-action="plus" data-target="subtitleSize">+</button>
-      </div>
-      <input id="subtitleSize" type="range" min="50" max="200" step="5" value="100">
-    </div>
-
-    <div class="setting-card">
-      <label>Subtitle Delay</label>
-      <div class="value-control">
-        <button class="small-btn" data-action="minus" data-target="subtitleDelay">−</button>
-        <input id="subtitleDelay" type="number" step="100" value="0">
-        <button class="small-btn" data-action="plus" data-target="subtitleDelay">+</button>
-      </div>
-      <div class="info">milliseconds — + = subtitle late, − = early</div>
-    </div>
-
-    <div class="setting-card">
-      <label>Aspect Ratio</label>
-      <select id="aspect">
-        <option value="best">Best Fit</option>
-        <option value="fit">Fit Screen</option>
-        <option value="fill">Fill / Stretch</option>
-        <option value="original">Original</option>
-        <option value="16:9">16:9</option>
-        <option value="4:3">4:3</option>
-        <option value="16:10">16:10</option>
-        <option value="2:1">2:1</option>
-        <option value="2.21:1">2.21:1</option>
-        <option value="2.35:1">2.35:1</option>
-        <option value="2.39:1">2.39:1</option>
-        <option value="5:4">5:4</option>
-        <option value="center">Centre</option>
-      </select>
-    </div>
-
-    <div class="setting-card">
-      <label>Video Quality</label>
-      <select id="quality">
-        <option value="-1">Auto</option>
-      </select>
-      <div class="info" id="qualityInfo">
-        HLS/source-supported qualities appear here.
-      </div>
-    </div>
-
-    <div class="setting-card">
-      <label>Audio Track</label>
-      <select id="audioTrack">
-        <option value="-1">Default</option>
-      </select>
-      <div class="info" id="audioInfo">
-        Browser/source supported tracks.
-      </div>
-    </div>
-
-    <div class="setting-card">
-      <label>Subtitle</label>
-      <select id="subtitleMode">
-        <option value="off">Off</option>
-        <option value="on">On</option>
-      </select>
-    </div>
-
-    <div class="setting-card">
-      <label>Subtitle File</label>
-      <input id="subtitleFile" type="file" accept=".srt,.vtt,text/vtt,application/x-subrip">
-    </div>
-
-    <div class="setting-card">
-      <label>Repeat</label>
-      <select id="repeat">
-        <option value="off">Off</option>
-        <option value="one">Repeat One</option>
-        <option value="all">Repeat All</option>
-      </select>
-    </div>
-
-    <div class="setting-card">
-      <label>Shuffle</label>
-      <select id="shuffle">
-        <option value="off">Off</option>
-        <option value="on">On</option>
-      </select>
-    </div>
-
+  <div class="setting">
+   <div class="settingTop">
+    <b>Contrast</b><span class="value" id="contrastValue">100%</span>
+   </div>
+   <div class="adjust">
+    <button data-adjust="contrast" data-dir="-1">−</button>
+    <input id="contrast" type="range" min="0" max="200" value="100">
+    <button data-adjust="contrast" data-dir="1">+</button>
+   </div>
   </div>
 
-  <div class="section">
-    <h2>Playlist / Queue</h2>
-    <div id="queue"></div>
+  <div class="setting">
+   <div class="settingTop">
+    <b>Saturation</b><span class="value" id="saturationValue">100%</span>
+   </div>
+   <div class="adjust">
+    <button data-adjust="saturation" data-dir="-1">−</button>
+    <input id="saturation" type="range" min="0" max="200" value="100">
+    <button data-adjust="saturation" data-dir="1">+</button>
+   </div>
   </div>
 
-  <div class="section">
-    <h2>History</h2>
-    <div id="history"></div>
+  <div class="setting">
+   <div class="settingTop">
+    <b>Volume</b><span class="value" id="volumeValue">100%</span>
+   </div>
+   <div class="adjust">
+    <button data-adjust="volume" data-dir="-1">−</button>
+    <input id="volume2" type="range" min="0" max="100" value="100">
+    <button data-adjust="volume" data-dir="1">+</button>
+   </div>
   </div>
 
-  <div id="status"></div>
+ </div>
+</div>
+
+<div class="panel">
+ <h3>Queue</h3>
+ <div class="queue" id="queue"></div>
+</div>
+
+<div class="panel">
+ <h3>Media Info</h3>
+ <div class="info" id="info">No media loaded.</div>
+</div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
 <script type="module" src="./app.js"></script>
 </body>
 </html>
