@@ -4,115 +4,96 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#050505">
-<title>Universal Player Ultra</title>
+<title>Universal Player</title>
 
 <style>
 :root{
-  --bg:#050505;
+  --bg:#080808;
   --panel:#111;
-  --panel2:#181818;
-  --line:#2a2a2a;
-  --text:#fff;
-  --muted:#aaa;
-  --accent:#ff6a00;
+  --panel2:#171717;
+  --line:#292929;
+  --text:#f4f4f4;
+  --muted:#a6a6a6;
+  --accent:#ff6a00
 }
 
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box
+}
 
 html,body{
   margin:0;
-  padding:0;
-  min-height:100%;
   background:var(--bg);
   color:var(--text);
-  font-family:Arial,Helvetica,sans-serif;
+  font-family:Arial,Helvetica,sans-serif
 }
 
-body{overflow-x:hidden}
+body{
+  min-height:100vh
+}
 
 button,input,select{
-  font:inherit;
+  font:inherit
 }
 
 button{
-  cursor:pointer;
+  cursor:pointer
 }
 
 .app{
-  width:100%;
-  max-width:1600px;
+  max-width:1500px;
   margin:auto;
-  padding:10px;
+  padding:12px
 }
 
 .topbar{
   display:flex;
-  align-items:center;
   gap:8px;
-  margin-bottom:10px;
+  align-items:center;
+  margin-bottom:10px
 }
 
 .brand{
-  font-size:21px;
   font-weight:800;
-  margin-right:auto;
+  font-size:20px;
+  margin-right:auto
 }
 
-.btn,
-.file-btn{
+.topbar button,
+.file-btn,
+.url-btn,
+.tool-btn{
   border:1px solid var(--line);
-  background:#151515;
+  background:#171717;
   color:#fff;
   border-radius:9px;
-  padding:9px 13px;
-}
-
-.btn:hover,
-.file-btn:hover{
-  background:#222;
-}
-
-.file-input{
-  display:none;
+  padding:9px 12px
 }
 
 .player-shell{
   position:relative;
-  width:100%;
-  height:min(78vh,850px);
-  min-height:300px;
   background:#000;
-  overflow:hidden;
   border-radius:12px;
+  overflow:hidden;
+  min-height:280px;
+  height:min(76vh,820px);
   display:flex;
   align-items:center;
-  justify-content:center;
+  justify-content:center
 }
 
 .player-shell:fullscreen{
-  width:100vw;
   height:100vh;
-  border-radius:0;
+  border-radius:0
 }
 
-.player-shell.youtube-mode{
-  background:#000;
-}
-
-#video{
+video{
   width:100%;
   height:100%;
   background:#000;
   display:block;
-  object-position:center;
-}
-
-#youtubeFrame{
-  width:100%;
-  height:100%;
-  border:0;
-  display:none;
-  background:#000;
+  object-fit:contain;
+  object-position:center
 }
 
 .audio-screen{
@@ -121,73 +102,65 @@ button{
   display:none;
   align-items:center;
   justify-content:center;
-  background:
-    radial-gradient(circle at center,#282828,#050505 65%);
-  pointer-events:none;
+  background:radial-gradient(circle at center,#222,#050505 65%)
 }
 
 .audio-screen .note{
-  font-size:90px;
+  font-size:70px
 }
 
-.audio-only .audio-screen{
-  display:flex;
+.player-shell.audio-only .audio-screen{
+  display:flex
 }
 
-.audio-only #video{
-  opacity:0;
+.player-shell.audio-only video{
+  opacity:0
 }
 
 .overlay-title{
   position:absolute;
-  top:15px;
+  top:16px;
   left:18px;
   right:18px;
   font-size:18px;
-  font-weight:600;
-  text-shadow:0 2px 10px #000;
+  text-shadow:0 2px 8px #000;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
   opacity:0;
-  transform:translateY(-5px);
+  transform:translateY(-6px);
   transition:.2s;
-  pointer-events:none;
+  pointer-events:none
 }
 
 .controls-visible .overlay-title{
   opacity:1;
-  transform:none;
+  transform:none
 }
 
 .controls{
   position:absolute;
-  left:0;
-  right:0;
-  bottom:0;
+  inset:auto 0 0;
   padding:10px 12px 12px;
-  background:linear-gradient(
-    transparent,
-    rgba(0,0,0,.92) 45%
-  );
+  background:linear-gradient(transparent,rgba(0,0,0,.9) 40%);
   opacity:0;
-  transition:.2s;
+  transition:.2s
 }
 
 .controls-visible .controls{
-  opacity:1;
+  opacity:1
 }
 
 .progress{
   width:100%;
-  margin:0 0 8px;
   accent-color:var(--accent);
+  margin:0 0 7px
 }
 
 .control-row{
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:7px
 }
 
 .control-row button,
@@ -195,77 +168,72 @@ button{
   height:38px;
   border:0;
   border-radius:8px;
-  background:rgba(25,25,25,.92);
+  background:rgba(25,25,25,.86);
   color:#fff;
-  padding:0 10px;
+  padding:0 10px
 }
 
-.control-row button:hover{
-  background:#333;
-}
-
-.big{
-  min-width:45px;
-  font-size:19px;
+.control-row .big{
+  font-size:20px;
+  min-width:44px
 }
 
 .time{
-  white-space:nowrap;
   font-size:13px;
   color:#eee;
-  margin-left:4px;
+  white-space:nowrap;
+  margin:0 4px
 }
 
 .spacer{
-  flex:1;
+  flex:1
 }
 
 .popover{
   position:absolute;
   right:10px;
-  bottom:65px;
-  width:min(330px,calc(100% - 20px));
-  max-height:75%;
+  bottom:64px;
+  min-width:230px;
+  max-height:70%;
   overflow:auto;
-  background:rgba(18,18,18,.98);
+  background:rgba(20,20,20,.97);
   border:1px solid #333;
   border-radius:12px;
-  box-shadow:0 15px 45px #000;
+  box-shadow:0 10px 35px #000;
   display:none;
-  z-index:50;
-  padding:7px;
+  z-index:20;
+  padding:7px
 }
 
 .popover.open{
-  display:block;
+  display:block
 }
 
 .menu-title{
-  padding:10px 12px;
-  color:#aaa;
   font-weight:700;
+  color:#aaa;
+  padding:9px 12px
 }
 
 .menu-item{
-  display:block;
   width:100%;
   border:0;
   background:transparent;
   color:#fff;
   text-align:left;
   padding:11px 12px;
-  border-radius:8px;
+  border-radius:8px
 }
 
 .menu-item:hover,
 .menu-item.active{
-  background:#2b2b2b;
+  background:#2b2b2b
 }
 
 .menu-item small{
   display:block;
-  color:#888;
-  margin-top:3px;
+  color:#999;
+  margin-top:3px
 }
 
 .panel{
@@ -273,7 +241,7 @@ button{
   border:1px solid var(--line);
   border-radius:12px;
   padding:12px;
-  margin-top:10px;
+  margin-top:10px
 }
 
 .dropzone{
@@ -281,101 +249,65 @@ button{
   border-radius:10px;
   padding:18px;
   text-align:center;
-  color:#ddd;
-}
-
-.dropzone.drag{
-  border-color:var(--accent);
-  background:#191919;
+  color:#ddd
 }
 
 .input-row{
   display:flex;
   gap:8px;
-  margin-top:9px;
+  margin-top:9px
 }
 
 .input-row input{
   flex:1;
   min-width:0;
-  background:#080808;
-  color:#fff;
+  background:#090909;
   border:1px solid #333;
+  color:#fff;
   border-radius:8px;
-  padding:10px;
+  padding:10px
+}
+
+.file-input{
+  display:none
 }
 
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
-  gap:9px;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:8px;
+  margin-top:10px
 }
 
 .card{
-  background:#0b0b0b;
+  background:#0c0c0c;
   border:1px solid #242424;
   border-radius:10px;
-  padding:11px;
+  padding:10px
 }
 
-.card-title{
-  font-size:13px;
+.card label{
+  display:block;
   color:#aaa;
-  margin-bottom:8px;
+  font-size:12px;
+  margin-bottom:5px
 }
 
-.setting-line{
-  display:flex;
-  align-items:center;
-  gap:7px;
-}
-
-.setting-line input[type=range]{
-  flex:1;
-}
-
-.value{
-  min-width:52px;
-  text-align:right;
-  font-size:13px;
-  color:#ddd;
-}
-
-.small-btn{
-  min-width:34px;
-  height:32px;
-  border:1px solid #333;
-  background:#1b1b1b;
-  color:#fff;
-  border-radius:7px;
-}
-
-.small-btn:hover{
-  background:#303030;
-}
-
-select,
-input[type=number]{
-  width:100%;
-  background:#090909;
-  color:#fff;
-  border:1px solid #333;
-  border-radius:8px;
-  padding:9px;
+.card input[type=range],
+.card select{
+  width:100%
 }
 
 .status{
-  min-height:18px;
   color:#aaa;
   font-size:13px;
-  margin-top:8px;
-  white-space:pre-wrap;
+  min-height:18px;
+  margin-top:8px
 }
 
 .queue{
-  max-height:260px;
-  overflow:auto;
-  margin-top:8px;
+  max-height:220px;
+  overflow:auto
 }
 
 .queue-item{
@@ -383,7 +315,7 @@ input[type=number]{
   align-items:center;
   gap:8px;
   padding:8px;
-  border-bottom:1px solid #222;
+  border-bottom:1px solid #222
 }
 
 .queue-item button{
@@ -391,7 +323,7 @@ input[type=number]{
   background:#222;
   color:#fff;
   border-radius:7px;
-  padding:6px 9px;
+  padding:6px 8px
 }
 
 .queue-item .name{
@@ -399,102 +331,70 @@ input[type=number]{
   min-width:0;
   white-space:nowrap;
   overflow:hidden;
-  text-overflow:ellipsis;
+  text-overflow:ellipsis
 }
 
 .badge{
   font-size:11px;
-  color:#888;
-}
-
-.info-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:6px;
-}
-
-.info-item{
-  padding:8px;
-  background:#0b0b0b;
-  border-radius:8px;
-  color:#ccc;
-  font-size:13px;
+  color:#aaa
 }
 
 .hidden{
-  display:none!important;
-}
-
-#ffmpegProgressWrap{
-  display:none;
-  margin-top:10px;
-}
-
-#ffmpegProgress{
-  width:100%;
-}
-
-#qualitySelect{
-  max-width:130px;
+  display:none!important
 }
 
 @media(max-width:700px){
 
   .app{
-    padding:0;
+    padding:0
   }
 
   .topbar{
-    padding:8px;
+    padding:8px
   }
 
   .brand{
-    font-size:17px;
+    font-size:17px
   }
 
   .player-shell{
-    height:58vh;
-    min-height:250px;
     border-radius:0;
+    height:58vh;
+    min-height:240px
   }
 
   .panel{
     border-radius:0;
-    margin-top:5px;
+    margin-top:6px
   }
 
   .controls{
-    padding:7px 7px calc(8px + env(safe-area-inset-bottom));
+    padding:7px 7px calc(8px + env(safe-area-inset-bottom))
   }
 
   .control-row{
-    gap:3px;
+    gap:4px
   }
 
   .control-row button,
   .control-row select{
     height:35px;
     padding:0 7px;
-    font-size:12px;
+    font-size:12px
   }
 
-  .desktop-only{
-    display:none!important;
+  .control-row .desktop-only{
+    display:none
   }
 
   .time{
-    font-size:10px;
+    font-size:11px
   }
 
   .overlay-title{
-    left:10px;
-    right:10px;
-    top:9px;
     font-size:15px;
-  }
-
-  .input-row{
-    flex-direction:column;
+    top:10px;
+    left:10px
   }
 }
 </style>
@@ -505,7 +405,7 @@ input[type=number]{
 <div class="app">
 
   <div class="topbar">
-    <div class="brand">Universal Player Ultra</div>
+    <div class="brand">Universal Player</div>
 
     <label class="file-btn">
       Open
@@ -513,11 +413,11 @@ input[type=number]{
         id="fileInput"
         class="file-input"
         type="file"
-        multiple
-        accept="video/*,audio/*,.mkv,.avi,.mov,.flv,.ts,.m2ts,.mts,.webm,.mp4,.m4v,.3gp,.mp3,.aac,.m4a,.wav,.flac,.ogg,.opus,.srt,.vtt">
+        accept="video/*,audio/*,.mkv,.avi,.mov,.flv,.ts,.m2ts,.webm,.mp4,.mp3,.aac,.m4a,.wav,.flac,.ogg,.opus"
+      >
     </label>
 
-    <button id="topFullscreen" class="btn">⛶</button>
+    <button id="fullscreenBtn">⛶</button>
   </div>
 
   <section id="playerShell" class="player-shell">
@@ -526,14 +426,7 @@ input[type=number]{
       id="video"
       playsinline
       preload="metadata"
-      crossorigin="anonymous">
-    </video>
-
-    <iframe
-      id="youtubeFrame"
-      allow="autoplay; fullscreen; picture-in-picture"
-      allowfullscreen>
-    </iframe>
+    ></video>
 
     <div class="audio-screen">
       <div class="note">♫</div>
@@ -549,29 +442,36 @@ input[type=number]{
         type="range"
         min="0"
         max="1000"
-        value="0">
+        value="0"
+      >
 
       <div class="control-row">
 
         <button id="prevBtn" class="big">⏮</button>
+
         <button id="backBtn">↶10</button>
+
         <button id="playBtn" class="big">▶</button>
+
         <button id="forwardBtn">10↷</button>
+
         <button id="nextBtn" class="big">⏭</button>
 
-        <span id="time" class="time">00:00 / 00:00</span>
+        <span id="time" class="time">
+          00:00 / 00:00
+        </span>
 
         <div class="spacer"></div>
 
-        <select id="qualitySelect">
-          <option value="">Quality</option>
-        </select>
-
         <button id="audioBtn">🔊</button>
+
         <button id="subtitleBtn">CC</button>
+
         <button id="aspectBtn">▣</button>
+
         <button id="moreBtn">⋮</button>
-        <button id="fullscreenBtn" class="big">⛶</button>
+
+        <button id="fullscreenBtn2">⛶</button>
 
       </div>
     </div>
@@ -590,22 +490,20 @@ input[type=number]{
     </div>
 
     <div class="input-row">
+
       <input
         id="urlInput"
         type="url"
-        placeholder="Paste MP4 / WebM / MKV / M3U8 / YouTube URL">
+        placeholder="Paste direct video/audio URL"
+      >
 
-      <button id="urlBtn" class="btn">
+      <button id="urlBtn" class="url-btn">
         Play URL
       </button>
+
     </div>
 
     <div id="status" class="status"></div>
-
-    <div id="ffmpegProgressWrap">
-      <progress id="ffmpegProgress" value="0" max="100"></progress>
-      <button id="cancelFFmpeg" class="btn">Cancel FFmpeg</button>
-    </div>
 
   </section>
 
@@ -614,127 +512,101 @@ input[type=number]{
     <div class="grid">
 
       <div class="card">
-        <div class="card-title">Playback Speed</div>
+        <label>Speed</label>
         <select id="speed"></select>
       </div>
 
       <div class="card">
-        <div class="card-title">Volume</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="volume" data-step="-0.05">−</button>
-          <input id="volume" type="range" min="0" max="1" step=".01" value="1">
-          <button class="small-btn" data-range="volume" data-step="0.05">+</button>
-          <span id="volumeValue" class="value">100%</span>
-        </div>
+        <label>Volume</label>
+        <input
+          id="volume"
+          type="range"
+          min="0"
+          max="1"
+          step=".01"
+          value="1"
+        >
       </div>
 
       <div class="card">
-        <div class="card-title">Brightness</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="brightness" data-step="-5">−</button>
-          <input id="brightness" type="range" min="0" max="200" value="100">
-          <button class="small-btn" data-range="brightness" data-step="5">+</button>
-          <span id="brightnessValue" class="value">100%</span>
-        </div>
+        <label>Subtitle size</label>
+        <input
+          id="subSize"
+          type="range"
+          min="70"
+          max="180"
+          value="100"
+        >
       </div>
 
       <div class="card">
-        <div class="card-title">Contrast</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="contrast" data-step="-5">−</button>
-          <input id="contrast" type="range" min="0" max="200" value="100">
-          <button class="small-btn" data-range="contrast" data-step="5">+</button>
-          <span id="contrastValue" class="value">100%</span>
-        </div>
+        <label>Subtitle delay (ms)</label>
+        <input
+          id="subDelay"
+          type="number"
+          value="0"
+          step="100"
+        >
       </div>
 
       <div class="card">
-        <div class="card-title">Saturation</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="saturation" data-step="-5">−</button>
-          <input id="saturation" type="range" min="0" max="200" value="100">
-          <button class="small-btn" data-range="saturation" data-step="5">+</button>
-          <span id="saturationValue" class="value">100%</span>
-        </div>
+        <label>Brightness</label>
+        <input
+          id="brightness"
+          type="range"
+          min="50"
+          max="150"
+          value="100"
+        >
       </div>
 
       <div class="card">
-        <div class="card-title">Hue</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="hue" data-step="-5">−</button>
-          <input id="hue" type="range" min="-180" max="180" value="0">
-          <button class="small-btn" data-range="hue" data-step="5">+</button>
-          <span id="hueValue" class="value">0°</span>
-        </div>
+        <label>Contrast</label>
+        <input
+          id="contrast"
+          type="range"
+          min="50"
+          max="150"
+          value="100"
+        >
       </div>
 
       <div class="card">
-        <div class="card-title">Subtitle Size</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="subSize" data-step="-10">−</button>
-          <input id="subSize" type="range" min="50" max="250" value="100">
-          <button class="small-btn" data-range="subSize" data-step="10">+</button>
-          <span id="subSizeValue" class="value">100%</span>
-        </div>
+        <label>Saturation</label>
+        <input
+          id="saturation"
+          type="range"
+          min="0"
+          max="200"
+          value="100"
+        >
       </div>
 
       <div class="card">
-        <div class="card-title">Subtitle Delay</div>
-        <input id="subDelay" type="number" value="0" step="100">
+        <label>Hue</label>
+        <input
+          id="hue"
+          type="range"
+          min="-180"
+          max="180"
+          value="0"
+        >
       </div>
 
       <div class="card">
-        <div class="card-title">Audio Gain</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="gain" data-step="-5">−</button>
-          <input id="gain" type="range" min="0" max="200" value="100">
-          <button class="small-btn" data-range="gain" data-step="5">+</button>
-          <span id="gainValue" class="value">100%</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Bass</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="bass" data-step="-1">−</button>
-          <input id="bass" type="range" min="-12" max="12" value="0">
-          <button class="small-btn" data-range="bass" data-step="1">+</button>
-          <span id="bassValue" class="value">0 dB</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Treble</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="treble" data-step="-1">−</button>
-          <input id="treble" type="range" min="-12" max="12" value="0">
-          <button class="small-btn" data-range="treble" data-step="1">+</button>
-          <span id="trebleValue" class="value">0 dB</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Balance</div>
-        <div class="setting-line">
-          <button class="small-btn" data-range="balance" data-step="-0.1">−</button>
-          <input id="balance" type="range" min="-1" max="1" step=".01" value="0">
-          <button class="small-btn" data-range="balance" data-step="0.1">+</button>
-          <span id="balanceValue" class="value">0</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Repeat</div>
+        <label>Repeat</label>
         <select id="repeat">
           <option value="off">Off</option>
-          <option value="one">Repeat One</option>
-          <option value="all">Repeat All</option>
+          <option value="one">One</option>
+          <option value="all">All</option>
         </select>
       </div>
 
       <div class="card">
-        <div class="card-title">Shuffle</div>
-        <button id="shuffleBtn" class="btn">Off</button>
+        <label>Shuffle</label>
+        <button id="shuffleBtn" class="tool-btn">
+          Off
+        </button>
       </div>
 
     </div>
@@ -742,32 +614,25 @@ input[type=number]{
   </section>
 
   <section class="panel">
+
     <b>Playlist / Queue</b>
+
     <div id="queue" class="queue"></div>
+
   </section>
 
   <section class="panel">
 
-    <b>Media Information</b>
+    <b>Media info</b>
 
-    <div class="info-grid">
-
-      <div id="infoFile" class="info-item">File: —</div>
-      <div id="infoType" class="info-item">Type: —</div>
-      <div id="infoSize" class="info-item">Size: —</div>
-      <div id="infoResolution" class="info-item">Resolution: —</div>
-      <div id="infoDuration" class="info-item">Duration: —</div>
-      <div id="infoFPS" class="info-item">FPS: —</div>
-      <div id="infoPosition" class="info-item">Position: —</div>
-      <div id="infoSource" class="info-item">Source: —</div>
-
+    <div id="info" class="status">
+      No media loaded.
     </div>
 
   </section>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
 <script type="module" src="./app.js"></script>
 
 </body>
