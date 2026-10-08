@@ -2,332 +2,222 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
-/>
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Universal Player</title>
 
 <style>
-
-* {
-  box-sizing: border-box;
+*{box-sizing:border-box}
+body{
+ margin:0;background:#000;color:#fff;
+ font-family:Arial,sans-serif
 }
-
-body {
-  margin: 0;
-  background: #000;
-  color: #fff;
-  font-family: Arial, sans-serif;
+header{
+ padding:15px;text-align:center;
+ font-size:24px;font-weight:bold;
+ background:#080808
 }
-
-header {
-  padding: 15px;
-  text-align: center;
-  font-size: 24px;
-  font-weight: bold;
-  background: #050505;
+.container{
+ width:100%;max-width:1500px;
+ margin:auto;padding:12px
 }
-
-.container {
-  width: 100%;
-  max-width: 1400px;
-  margin: auto;
-  padding: 15px;
+.player{
+ background:#000;position:relative;
+ width:100%;overflow:hidden
 }
-
-.player {
-  width: 100%;
-  background: #000;
-  position: relative;
-  overflow: hidden;
+video{
+ width:100%;max-height:76vh;
+ display:block;margin:auto;
+ background:#000;object-fit:contain;
+ transition:transform .2s
 }
-
-video {
-  width: 100%;
-  max-height: 75vh;
-  display: block;
-  margin: auto;
-  background: #000;
-  object-fit: contain;
-  transition: transform .25s;
+.panel{
+ margin-top:12px;padding:12px;
+ background:#111;border-radius:10px
 }
-
-.panel {
-  margin-top: 15px;
-  padding: 15px;
-  background: #111;
-  border-radius: 10px;
+button,select,input{
+ background:#1b1b1b;color:#fff;
+ border:1px solid #444;border-radius:6px;
+ padding:9px;margin:3px
 }
-
-input,
-select,
-button {
-  background: #1c1c1c;
-  color: white;
-  border: 1px solid #444;
-  border-radius: 6px;
-  padding: 10px;
-  margin: 4px;
+button{cursor:pointer}
+button:hover{background:#303030}
+input[type=range]{accent-color:#fff}
+.url{
+ display:flex;gap:4px
 }
-
-button {
-  cursor: pointer;
+.url input{flex:1}
+.controls{
+ display:flex;align-items:center;
+ flex-wrap:wrap;gap:3px
 }
-
-button:hover {
-  background: #292929;
+#progress{width:100%}
+#volume{width:120px}
+#status{color:#aaa;margin-top:8px;font-size:14px}
+#ffmpegBox{display:none;margin-top:8px}
+#ffmpegProgress{width:100%}
+.drop{
+ border:2px dashed #444;
+ border-radius:8px;
+ padding:15px;text-align:center;
+ margin-bottom:10px;
+ color:#aaa
 }
-
-.url-row {
-  display: flex;
-  gap: 5px;
+.drop.active{
+ border-color:#fff;
+ color:#fff
 }
-
-.url-row input {
-  flex: 1;
+.playlist{
+ margin-top:15px
 }
-
-.controls {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 10px;
+.playlist h2{font-size:20px}
+.item{
+ display:flex;
+ align-items:center;
+ gap:8px;
+ background:#151515;
+ margin:5px 0;
+ padding:8px;
+ border-radius:7px
 }
-
-input[type="range"] {
-  accent-color: white;
+.item-name{
+ flex:1;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ white-space:nowrap
 }
-
-#progress {
-  width: 100%;
+.item.active{
+ outline:1px solid #777
 }
-
-#volume {
-  width: 120px;
+.subcontrols{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:3px;
+ margin-top:8px
 }
-
-#status {
-  margin-top: 10px;
-  color: #aaa;
-  font-size: 14px;
+@media(max-width:700px){
+ header{font-size:20px}
+ .container{padding:6px}
+ .panel{padding:7px}
+ button,select,input{padding:8px}
+ #volume{width:80px}
 }
-
-#ffmpegProgressBox {
-  display: none;
-  margin-top: 10px;
+@media(min-width:1200px){
+ button,select{font-size:16px;padding:11px 14px}
 }
-
-#ffmpegProgress {
-  width: 100%;
-}
-
-.history {
-  margin-top: 20px;
-}
-
-.history h2 {
-  font-size: 20px;
-}
-
-.history-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #151515;
-  padding: 8px;
-  margin: 5px 0;
-  border-radius: 6px;
-  word-break: break-all;
-}
-
-.history-item span {
-  padding-right: 10px;
-}
-
-@media (max-width: 700px) {
-
-  header {
-    font-size: 20px;
-  }
-
-  .container {
-    padding: 8px;
-  }
-
-  .panel {
-    padding: 8px;
-  }
-
-  .controls {
-    justify-content: center;
-  }
-
-  button,
-  select,
-  input {
-    padding: 8px;
-  }
-
-  #volume {
-    width: 90px;
-  }
-}
-
 </style>
 </head>
 
 <body>
 
-<header>
-  Universal Player
-</header>
+<header>Universal Player</header>
 
 <div class="container">
 
-  <div class="player">
-    <video
-      id="video"
-      playsinline
-      preload="metadata"
-    ></video>
-  </div>
+<div class="player">
+<video id="video" playsinline preload="metadata"></video>
+</div>
 
-  <div class="panel">
+<div class="panel">
 
-    <input
-      id="fileInput"
-      type="file"
-      accept="video/*,audio/*,.mkv,.avi,.mov,.flv,.wmv,.webm,.mp4,.m4v,.ts,.m2ts,.mts,.3gp,.ogv,.mp3,.wav,.flac,.aac,.m4a,.ogg"
-    />
+<div id="dropZone" class="drop">
+📂 Drag & Drop Video / Audio Here
+</div>
 
-    <div class="url-row">
+<input id="fileInput"
+ type="file"
+ multiple
+ accept="video/*,audio/*,.mkv,.avi,.mov,.flv,.wmv,.webm,.mp4,.m4v,.ts,.m2ts,.mts,.3gp,.ogv,.mp3,.wav,.flac,.aac,.m4a,.ogg">
 
-      <input
-        id="urlInput"
-        type="url"
-        placeholder="Direct video URL"
-      />
+<div class="url">
+<input id="urlInput" type="url"
+ placeholder="Direct video/audio URL">
+<button id="playUrlBtn">Play URL</button>
+</div>
 
-      <button id="playUrlBtn">
-        Play URL
-      </button>
+<div class="controls">
 
-    </div>
+<button id="prevBtn">⏮</button>
+<button id="playBtn">▶</button>
+<button id="backBtn">-10s</button>
+<button id="forwardBtn">+10s</button>
+<button id="nextBtn">⏭</button>
 
-    <div class="controls">
+<span id="currentTime">00:00</span>
 
-      <button id="playBtn">
-        ▶
-      </button>
+</div>
 
-      <button id="backBtn">
-        -10s
-      </button>
+<input id="progress" type="range"
+ min="0" max="100" value="0">
 
-      <button id="forwardBtn">
-        +10s
-      </button>
+<div class="controls">
 
-      <span id="currentTime">
-        00:00
-      </span>
+<span id="duration">00:00</span>
 
-      <input
-        id="progress"
-        type="range"
-        min="0"
-        max="100"
-        value="0"
-      />
+<button id="muteBtn">🔊</button>
 
-      <span id="duration">
-        00:00
-      </span>
+<input id="volume" type="range"
+ min="0" max="1" step=".01" value="1">
 
-    </div>
+<label>Speed</label>
+<select id="speed"></select>
 
-    <div class="controls">
+<label>Screen</label>
+<select id="aspect">
+<option value="contain">Fit</option>
+<option value="cover">Fill</option>
+<option value="fill">Original</option>
+</select>
 
-      <button id="muteBtn">
-        🔊
-      </button>
+<button id="rotateBtn">🔄 Rotate</button>
+<button id="fullscreenBtn">⛶ Fullscreen</button>
 
-      <input
-        id="volume"
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value="1"
-      />
+</div>
 
-      <label>
-        Speed
-      </label>
+<div class="subcontrols">
 
-      <select id="speed"></select>
+<label>Audio</label>
+<select id="audioTracks">
+<option value="-1">Default</option>
+</select>
 
-      <label>
-        Screen
-      </label>
+<label>Subtitle</label>
+<select id="subtitleTracks">
+<option value="-1">Off</option>
+</select>
 
-      <select id="aspect">
-        <option value="contain">
-          Fit
-        </option>
+<input id="subtitleInput"
+ type="file"
+ accept=".srt,.vtt">
 
-        <option value="cover">
-          Fill
-        </option>
+<label>Size</label>
+<select id="subtitleSize">
+<option value="18px">Small</option>
+<option value="24px" selected>Medium</option>
+<option value="32px">Large</option>
+<option value="42px">XL</option>
+</select>
 
-        <option value="fill">
-          Original
-        </option>
-      </select>
+</div>
 
-      <button id="rotateBtn">
-        🔄 Rotate
-      </button>
+<div id="status">Ready</div>
 
-      <button id="fullscreenBtn">
-        ⛶ Fullscreen
-      </button>
+<div id="ffmpegBox">
+FFmpeg conversion:
+<span id="ffmpegText">0%</span>
+<progress id="ffmpegProgress"
+ value="0" max="100"></progress>
+</div>
 
-    </div>
+</div>
 
-    <div id="status">
-      Ready
-    </div>
+<div class="playlist">
 
-    <div id="ffmpegProgressBox">
+<h2>Playlist / Queue</h2>
 
-      <div>
-        FFmpeg conversion:
-        <span id="ffmpegProgressText"></span>
-      </div>
+<div id="playlist"></div>
 
-      <progress
-        id="ffmpegProgress"
-        value="0"
-        max="100"
-      ></progress>
-
-    </div>
-
-  </div>
-
-  <div class="history">
-
-    <h2>
-      Playback History
-    </h2>
-
-    <div id="historyList"></div>
-
-  </div>
+</div>
 
 </div>
 
