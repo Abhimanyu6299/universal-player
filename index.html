@@ -2,1070 +2,336 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+/>
+
 <title>Universal Player</title>
 
 <style>
-*{box-sizing:border-box}
 
-html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  background:#000;
-  color:#fff;
-  font-family:Arial,sans-serif;
+* {
+  box-sizing: border-box;
 }
 
-body{overflow:hidden}
-
-.app{
-  width:100%;
-  height:100%;
-  display:flex;
-  flex-direction:column;
-  background:#000;
+body {
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
 }
 
-.topbar{
-  height:58px;
-  min-height:58px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 18px;
-  background:#080808;
-  border-bottom:1px solid #222;
+header {
+  padding: 15px;
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  background: #050505;
 }
 
-.logo{
-  font-size:20px;
-  font-weight:700;
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: auto;
+  padding: 15px;
 }
 
-.top-actions{
-  display:flex;
-  gap:7px;
+.player {
+  width: 100%;
+  background: #000;
+  position: relative;
+  overflow: hidden;
 }
 
-button,select,input{
-  background:#111;
-  color:#fff;
-  border:1px solid #333;
-  border-radius:7px;
-  padding:8px 11px;
-  font-size:14px;
+video {
+  width: 100%;
+  max-height: 75vh;
+  display: block;
+  margin: auto;
+  background: #000;
+  object-fit: contain;
+  transition: transform .25s;
 }
 
-button{cursor:pointer}
-button:hover{background:#1d1d1d}
-
-.content{
-  flex:1;
-  min-height:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:12px;
+.panel {
+  margin-top: 15px;
+  padding: 15px;
+  background: #111;
+  border-radius: 10px;
 }
 
-.player{
-  width:100%;
-  height:100%;
-  max-width:1800px;
-  position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  background:#000;
-  border-radius:8px;
+input,
+select,
+button {
+  background: #1c1c1c;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 10px;
+  margin: 4px;
 }
 
-video{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  background:#000;
-  outline:none;
-  transition:transform .2s ease;
+button {
+  cursor: pointer;
 }
 
-.empty{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:30px;
-  pointer-events:none;
+button:hover {
+  background: #292929;
 }
 
-.empty-title{
-  font-size:clamp(24px,4vw,42px);
-  font-weight:700;
-  margin-bottom:10px;
+.url-row {
+  display: flex;
+  gap: 5px;
 }
 
-.empty-text{
-  color:#999;
+.url-row input {
+  flex: 1;
 }
 
-.bottom{
-  background:#070707;
-  border-top:1px solid #222;
-  padding:9px;
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
 }
 
-.progress{
-  width:100%;
-  margin-bottom:8px;
+input[type="range"] {
+  accent-color: white;
 }
 
-#progress{
-  width:100%;
-  height:5px;
-  padding:0;
-  border:0;
-  cursor:pointer;
+#progress {
+  width: 100%;
 }
 
-.controls{
-  display:flex;
-  align-items:center;
-  gap:7px;
-  flex-wrap:wrap;
+#volume {
+  width: 120px;
 }
 
-.url-box{
-  flex:1;
-  min-width:230px;
+#status {
+  margin-top: 10px;
+  color: #aaa;
+  font-size: 14px;
 }
 
-.url-box input{
-  width:100%;
+#ffmpegProgressBox {
+  display: none;
+  margin-top: 10px;
 }
 
-.time{
-  min-width:100px;
-  text-align:center;
-  color:#bbb;
-  font-size:13px;
+#ffmpegProgress {
+  width: 100%;
 }
 
-.volume{
-  width:100px;
-  accent-color:#fff;
+.history {
+  margin-top: 20px;
 }
 
-.panel{
-  display:none;
-  position:absolute;
-  z-index:50;
-  right:12px;
-  top:12px;
-  width:min(390px,calc(100% - 24px));
-  max-height:65vh;
-  overflow:auto;
-  background:#101010;
-  border:1px solid #333;
-  border-radius:10px;
-  padding:12px;
+.history h2 {
+  font-size: 20px;
 }
 
-.panel.show{display:block}
-
-.panel-title{
-  font-weight:bold;
-  margin-bottom:10px;
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #151515;
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 6px;
+  word-break: break-all;
 }
 
-.panel-row{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  margin-bottom:10px;
+.history-item span {
+  padding-right: 10px;
 }
 
-.panel-row input{
-  flex:1;
-}
+@media (max-width: 700px) {
 
-.history-item{
-  padding:10px;
-  border-bottom:1px solid #292929;
-  cursor:pointer;
-  word-break:break-all;
-}
-
-.history-item:hover{
-  background:#1b1b1b;
-}
-
-.message{
-  position:absolute;
-  left:50%;
-  bottom:90px;
-  transform:translateX(-50%);
-  background:#151515;
-  border:1px solid #444;
-  border-radius:8px;
-  padding:10px 15px;
-  display:none;
-  z-index:100;
-  max-width:90%;
-  text-align:center;
-}
-
-.message.show{display:block}
-
-@media(max-width:700px){
-
-  .topbar{
-    height:52px;
-    min-height:52px;
-    padding:0 10px;
+  header {
+    font-size: 20px;
   }
 
-  .logo{font-size:17px}
-
-  .content{padding:0}
-
-  .player{border-radius:0}
-
-  .bottom{padding:7px}
-
-  .controls{gap:5px}
-
-  button,select,input{
-    padding:8px 9px;
-    font-size:13px;
+  .container {
+    padding: 8px;
   }
 
-  .url-box{
-    min-width:100%;
-    order:20;
+  .panel {
+    padding: 8px;
   }
 
-  .volume{
-    width:75px;
+  .controls {
+    justify-content: center;
+  }
+
+  button,
+  select,
+  input {
+    padding: 8px;
+  }
+
+  #volume {
+    width: 90px;
   }
 }
+
 </style>
 </head>
 
 <body>
 
-<div class="app">
-
-<header class="topbar">
-
-  <div class="logo">Universal Player</div>
-
-  <div class="top-actions">
-    <button id="subtitleButton">Subtitle</button>
-    <button id="historyButton">History</button>
-  </div>
-
+<header>
+  Universal Player
 </header>
 
-<main class="content">
+<div class="container">
 
-<section class="player" id="player">
-
-  <video id="video" playsinline preload="metadata">
-    <track id="subtitleTrack" kind="subtitles" label="External Subtitle">
-  </video>
-
-  <div class="empty" id="empty">
-    <div class="empty-title">Universal Player</div>
-    <div class="empty-text">
-      Open a video or paste a direct video URL
-    </div>
+  <div class="player">
+    <video
+      id="video"
+      playsinline
+      preload="metadata"
+    ></video>
   </div>
 
-  <div class="panel" id="subtitlePanel">
+  <div class="panel">
 
-    <div class="panel-title">Subtitles</div>
+    <input
+      id="fileInput"
+      type="file"
+      accept="video/*,audio/*,.mkv,.avi,.mov,.flv,.wmv,.webm,.mp4,.m4v,.ts,.m2ts,.mts,.3gp,.ogv,.mp3,.wav,.flac,.aac,.m4a,.ogg"
+    />
 
-    <div class="panel-row">
-      <button id="subtitleFileButton">
-        Open Subtitle
+    <div class="url-row">
+
+      <input
+        id="urlInput"
+        type="url"
+        placeholder="Direct video URL"
+      />
+
+      <button id="playUrlBtn">
+        Play URL
+      </button>
+
+    </div>
+
+    <div class="controls">
+
+      <button id="playBtn">
+        ▶
+      </button>
+
+      <button id="backBtn">
+        -10s
+      </button>
+
+      <button id="forwardBtn">
+        +10s
+      </button>
+
+      <span id="currentTime">
+        00:00
+      </span>
+
+      <input
+        id="progress"
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+      />
+
+      <span id="duration">
+        00:00
+      </span>
+
+    </div>
+
+    <div class="controls">
+
+      <button id="muteBtn">
+        🔊
       </button>
 
       <input
-        id="subtitleFile"
-        type="file"
-        accept=".srt,.vtt,text/vtt,application/x-subrip"
-        hidden>
+        id="volume"
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value="1"
+      />
+
+      <label>
+        Speed
+      </label>
+
+      <select id="speed"></select>
+
+      <label>
+        Screen
+      </label>
+
+      <select id="aspect">
+        <option value="contain">
+          Fit
+        </option>
+
+        <option value="cover">
+          Fill
+        </option>
+
+        <option value="fill">
+          Original
+        </option>
+      </select>
+
+      <button id="rotateBtn">
+        🔄 Rotate
+      </button>
+
+      <button id="fullscreenBtn">
+        ⛶ Fullscreen
+      </button>
+
     </div>
 
-    <div class="panel-row">
-      <button id="subtitleOff">
-        Turn Off
-      </button>
+    <div id="status">
+      Ready
+    </div>
+
+    <div id="ffmpegProgressBox">
+
+      <div>
+        FFmpeg conversion:
+        <span id="ffmpegProgressText"></span>
+      </div>
+
+      <progress
+        id="ffmpegProgress"
+        value="0"
+        max="100"
+      ></progress>
+
     </div>
 
   </div>
 
-  <div class="panel" id="historyPanel">
+  <div class="history">
 
-    <div class="panel-title">
+    <h2>
       Playback History
-    </div>
+    </h2>
 
     <div id="historyList"></div>
 
   </div>
 
-  <div class="message" id="message"></div>
-
-</section>
-
-</main>
-
-<section class="bottom">
-
-  <div class="progress">
-    <input
-      id="progress"
-      type="range"
-      min="0"
-      max="100"
-      step="0.01"
-      value="0">
-  </div>
-
-  <div class="controls">
-
-    <button id="openButton">Open</button>
-
-    <input
-      id="fileInput"
-      type="file"
-      accept="video/*,audio/*"
-      hidden>
-
-    <button id="playPause">▶</button>
-
-    <button id="back10">−10s</button>
-    <button id="forward10">+10s</button>
-
-    <span class="time" id="time">
-      00:00 / 00:00
-    </span>
-
-    <button id="mute">🔊</button>
-
-    <input
-      id="volume"
-      class="volume"
-      type="range"
-      min="0"
-      max="1"
-      step="0.01"
-      value="1">
-
-    <select id="speed"></select>
-
-    <select id="aspect">
-      <option value="contain">Fit</option>
-      <option value="cover">Fill</option>
-      <option value="none">Original</option>
-    </select>
-
-    <button id="rotate">↻ Rotate</button>
-
-    <button id="fullscreen">⛶ Fullscreen</button>
-
-    <div class="url-box">
-      <input
-        id="urlInput"
-        type="url"
-        placeholder="Paste direct video URL">
-    </div>
-
-    <button id="urlButton">Play URL</button>
-
-  </div>
-
-</section>
-
 </div>
 
-<script>
-
-const video=document.getElementById("video");
-const fileInput=document.getElementById("fileInput");
-const openButton=document.getElementById("openButton");
-const playPause=document.getElementById("playPause");
-const back10=document.getElementById("back10");
-const forward10=document.getElementById("forward10");
-const progress=document.getElementById("progress");
-const time=document.getElementById("time");
-const speed=document.getElementById("speed");
-const volume=document.getElementById("volume");
-const mute=document.getElementById("mute");
-const aspect=document.getElementById("aspect");
-const rotate=document.getElementById("rotate");
-const fullscreen=document.getElementById("fullscreen");
-const urlInput=document.getElementById("urlInput");
-const urlButton=document.getElementById("urlButton");
-const empty=document.getElementById("empty");
-
-const subtitleButton=document.getElementById("subtitleButton");
-const subtitlePanel=document.getElementById("subtitlePanel");
-const subtitleFileButton=document.getElementById("subtitleFileButton");
-const subtitleFile=document.getElementById("subtitleFile");
-const subtitleOff=document.getElementById("subtitleOff");
-const subtitleTrack=document.getElementById("subtitleTrack");
-
-const historyButton=document.getElementById("historyButton");
-const historyPanel=document.getElementById("historyPanel");
-const historyList=document.getElementById("historyList");
-
-const message=document.getElementById("message");
-
-let objectURL=null;
-let subtitleURL=null;
-let rotation=0;
-let currentMediaKey=null;
-
-
-/* =========================
-   MESSAGE
-========================= */
-
-function showMessage(text){
-
-  message.textContent=text;
-  message.classList.add("show");
-
-  clearTimeout(showMessage.timer);
-
-  showMessage.timer=setTimeout(()=>{
-    message.classList.remove("show");
-  },3000);
-}
-
-
-/* =========================
-   SPEED
-========================= */
-
-for(let i=25;i<=400;i++){
-
-  const value=(i/100).toFixed(2);
-
-  const option=document.createElement("option");
-
-  option.value=value;
-  option.textContent=value+"×";
-
-  if(value==="1.00"){
-    option.selected=true;
-  }
-
-  speed.appendChild(option);
-}
-
-
-/* =========================
-   TIME
-========================= */
-
-function formatTime(seconds){
-
-  if(!Number.isFinite(seconds)){
-    return "00:00";
-  }
-
-  seconds=Math.max(0,Math.floor(seconds));
-
-  const h=Math.floor(seconds/3600);
-  const m=Math.floor((seconds%3600)/60);
-  const s=seconds%60;
-
-  if(h>0){
-
-    return String(h).padStart(2,"0")+":"+
-           String(m).padStart(2,"0")+":"+
-           String(s).padStart(2,"0");
-  }
-
-  return String(m).padStart(2,"0")+":"+
-         String(s).padStart(2,"0");
-}
-
-function updateTime(){
-
-  const current=video.currentTime||0;
-  const duration=video.duration||0;
-
-  time.textContent=
-    formatTime(current)+" / "+formatTime(duration);
-
-  if(duration){
-    progress.value=(current/duration)*100;
-  }
-}
-
-
-/* =========================
-   PLAY
-========================= */
-
-function updatePlayButton(){
-
-  playPause.textContent=
-    video.paused ? "▶" : "⏸";
-}
-
-playPause.addEventListener("click",()=>{
-
-  if(video.paused){
-
-    video.play().catch(()=>{
-      showMessage("Playback could not start.");
-    });
-
-  }else{
-
-    video.pause();
-  }
-
-});
-
-
-/* =========================
-   OPEN FILE
-========================= */
-
-openButton.addEventListener("click",()=>{
-  fileInput.click();
-});
-
-fileInput.addEventListener("change",()=>{
-
-  const file=fileInput.files[0];
-
-  if(!file)return;
-
-  if(objectURL){
-    URL.revokeObjectURL(objectURL);
-  }
-
-  objectURL=URL.createObjectURL(file);
-
-  currentMediaKey=objectURL;
-
-  video.src=objectURL;
-  video.load();
-
-  empty.style.display="none";
-
-  video.play().catch(()=>{});
-
-  saveHistory(file.name,objectURL);
-});
-
-
-/* =========================
-   URL
-========================= */
-
-urlButton.addEventListener("click",()=>{
-
-  const url=urlInput.value.trim();
-
-  if(!url)return;
-
-  currentMediaKey=url;
-
-  video.src=url;
-  video.load();
-
-  empty.style.display="none";
-
-  video.play().catch(()=>{
-    showMessage(
-      "URL playback failed. The server may block browser access or CORS."
-    );
-  });
-
-  saveHistory(url,url);
-});
-
-
-/* =========================
-   SEEK
-========================= */
-
-back10.addEventListener("click",()=>{
-  video.currentTime=
-    Math.max(0,video.currentTime-10);
-});
-
-forward10.addEventListener("click",()=>{
-  video.currentTime=
-    Math.min(
-      video.duration||Infinity,
-      video.currentTime+10
-    );
-});
-
-progress.addEventListener("input",()=>{
-
-  if(!video.duration)return;
-
-  video.currentTime=
-    Number(progress.value)/100*video.duration;
-});
-
-
-/* =========================
-   SPEED
-========================= */
-
-speed.addEventListener("change",()=>{
-
-  video.playbackRate=
-    Number(speed.value);
-});
-
-
-/* =========================
-   VOLUME
-========================= */
-
-volume.addEventListener("input",()=>{
-
-  video.volume=Number(volume.value);
-
-  if(video.volume===0){
-    video.muted=true;
-  }else{
-    video.muted=false;
-  }
-
-  updateMuteButton();
-});
-
-mute.addEventListener("click",()=>{
-
-  video.muted=!video.muted;
-
-  updateMuteButton();
-});
-
-function updateMuteButton(){
-
-  mute.textContent=
-    video.muted || video.volume===0
-    ? "🔇"
-    : "🔊";
-}
-
-
-/* =========================
-   ASPECT RATIO
-========================= */
-
-aspect.addEventListener("change",()=>{
-
-  video.style.objectFit=
-    aspect.value;
-
-});
-
-
-/* =========================
-   ROTATION
-========================= */
-
-rotate.addEventListener("click",()=>{
-
-  rotation=(rotation+90)%360;
-
-  video.style.transform=
-    "rotate("+rotation+"deg)";
-});
-
-
-/* =========================
-   FULLSCREEN
-========================= */
-
-fullscreen.addEventListener("click",async()=>{
-
-  try{
-
-    if(document.fullscreenElement){
-
-      await document.exitFullscreen();
-
-    }else{
-
-      await document.documentElement.requestFullscreen();
-    }
-
-  }catch(error){
-
-    showMessage("Fullscreen is not available.");
-  }
-
-});
-
-
-/* =========================
-   SUBTITLE PANEL
-========================= */
-
-subtitleButton.addEventListener("click",()=>{
-
-  historyPanel.classList.remove("show");
-
-  subtitlePanel.classList.toggle("show");
-});
-
-
-/* =========================
-   SUBTITLE FILE
-========================= */
-
-subtitleFileButton.addEventListener("click",()=>{
-  subtitleFile.click();
-});
-
-subtitleFile.addEventListener("change",async()=>{
-
-  const file=subtitleFile.files[0];
-
-  if(!file)return;
-
-  try{
-
-    const text=await file.text();
-
-    let vtt=text;
-
-    if(file.name.toLowerCase().endsWith(".srt")){
-
-      vtt=
-        "WEBVTT\n\n"+
-        convertSrtToVtt(text);
-    }
-
-    if(subtitleURL){
-      URL.revokeObjectURL(subtitleURL);
-    }
-
-    const blob=new Blob(
-      [vtt],
-      {type:"text/vtt"}
-    );
-
-    subtitleURL=URL.createObjectURL(blob);
-
-    subtitleTrack.src=subtitleURL;
-    subtitleTrack.kind="subtitles";
-    subtitleTrack.label=file.name;
-    subtitleTrack.srclang="en";
-
-    subtitleTrack.track.mode="showing";
-
-    showMessage("Subtitle loaded.");
-
-  }catch(error){
-
-    showMessage("Could not load subtitle.");
-  }
-
-});
-
-
-/* =========================
-   SRT → VTT
-========================= */
-
-function convertSrtToVtt(text){
-
-  return text
-    .replace(/\r+/g,"")
-    .replace(
-      /(\d{2}:\d{2}:\d{2}),(\d{3})/g,
-      "$1.$2"
-    );
-}
-
-
-/* =========================
-   SUBTITLE OFF
-========================= */
-
-subtitleOff.addEventListener("click",()=>{
-
-  subtitleTrack.track.mode="disabled";
-
-  subtitlePanel.classList.remove("show");
-});
-
-
-/* =========================
-   HISTORY
-========================= */
-
-function saveHistory(name,url){
-
-  let history=JSON.parse(
-    localStorage.getItem(
-      "universalPlayerHistory"
-    )||"[]"
-  );
-
-  history=history.filter(
-    item=>item.url!==url
-  );
-
-  history.unshift({
-    name:name,
-    url:url,
-    position:0,
-    date:Date.now()
-  });
-
-  history=history.slice(0,50);
-
-  localStorage.setItem(
-    "universalPlayerHistory",
-    JSON.stringify(history)
-  );
-
-  renderHistory();
-}
-
-function renderHistory(){
-
-  const history=JSON.parse(
-    localStorage.getItem(
-      "universalPlayerHistory"
-    )||"[]"
-  );
-
-  historyList.innerHTML="";
-
-  if(!history.length){
-
-    historyList.innerHTML=
-      '<div style="color:#888;padding:10px">No history yet</div>';
-
-    return;
-  }
-
-  history.forEach(item=>{
-
-    const div=document.createElement("div");
-
-    div.className="history-item";
-
-    div.textContent=item.name;
-
-    div.addEventListener("click",()=>{
-
-      currentMediaKey=item.url;
-
-      video.src=item.url;
-      video.load();
-
-      empty.style.display="none";
-
-      video.addEventListener(
-        "loadedmetadata",
-        ()=>{
-          if(item.position){
-            video.currentTime=item.position;
-          }
-        },
-        {once:true}
-      );
-
-      video.play().catch(()=>{});
-
-      historyPanel.classList.remove("show");
-    });
-
-    historyList.appendChild(div);
-  });
-}
-
-historyButton.addEventListener("click",()=>{
-
-  subtitlePanel.classList.remove("show");
-
-  historyPanel.classList.toggle("show");
-
-  renderHistory();
-});
-
-
-/* =========================
-   SAVE POSITION
-========================= */
-
-video.addEventListener("timeupdate",()=>{
-
-  updateTime();
-
-  if(!currentMediaKey)return;
-
-  let history=JSON.parse(
-    localStorage.getItem(
-      "universalPlayerHistory"
-    )||"[]"
-  );
-
-  const item=history.find(
-    x=>x.url===currentMediaKey
-  );
-
-  if(item){
-
-    item.position=video.currentTime;
-
-    localStorage.setItem(
-      "universalPlayerHistory",
-      JSON.stringify(history)
-    );
-  }
-});
-
-
-/* =========================
-   EVENTS
-========================= */
-
-video.addEventListener("play",updatePlayButton);
-video.addEventListener("pause",updatePlayButton);
-video.addEventListener("loadedmetadata",updateTime);
-
-video.addEventListener("loadeddata",()=>{
-  empty.style.display="none";
-});
-
-video.addEventListener("error",()=>{
-
-  showMessage(
-    "This media cannot be played by the current browser engine."
-  );
-});
-
-
-/* =========================
-   KEYBOARD
-========================= */
-
-document.addEventListener("keydown",(event)=>{
-
-  if(
-    event.target.tagName==="INPUT" ||
-    event.target.tagName==="SELECT"
-  ){
-    return;
-  }
-
-  switch(event.key){
-
-    case " ":
-
-      event.preventDefault();
-
-      if(video.paused){
-        video.play().catch(()=>{});
-      }else{
-        video.pause();
-      }
-
-      break;
-
-    case "ArrowLeft":
-
-      video.currentTime=
-        Math.max(
-          0,
-          video.currentTime-5
-        );
-
-      break;
-
-    case "ArrowRight":
-
-      video.currentTime=
-        Math.min(
-          video.duration||Infinity,
-          video.currentTime+5
-        );
-
-      break;
-
-    case "ArrowUp":
-
-      video.volume=
-        Math.min(1,video.volume+0.05);
-
-      volume.value=video.volume;
-
-      break;
-
-    case "ArrowDown":
-
-      video.volume=
-        Math.max(0,video.volume-0.05);
-
-      volume.value=video.volume;
-
-      break;
-
-    case "m":
-    case "M":
-
-      video.muted=!video.muted;
-      updateMuteButton();
-
-      break;
-
-    case "f":
-    case "F":
-
-      fullscreen.click();
-
-      break;
-
-    case "r":
-    case "R":
-
-      rotate.click();
-
-      break;
-  }
-
-});
-
-
-/* =========================
-   INITIAL STATE
-========================= */
-
-video.volume=1;
-volume.value=1;
-
-updateMuteButton();
-updatePlayButton();
-renderHistory();
-
-</script>
+<script type="module" src="./app.js"></script>
 
 </body>
 </html>
