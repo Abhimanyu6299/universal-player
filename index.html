@@ -3,619 +3,180 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Universal Player</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
-
-html,
-body{
-  margin:0;
-  padding:0;
-  background:#000;
-  color:#fff;
-  font-family:Arial,Helvetica,sans-serif;
-}
-
-body{
-  min-height:100vh;
-}
-
-header{
-  height:58px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:#080808;
-  border-bottom:1px solid #222;
-  font-size:23px;
-  font-weight:bold;
-}
-
-.container{
-  width:100%;
-  max-width:1500px;
-  margin:auto;
-  padding:12px;
-}
-
-.player{
-  position:relative;
-  width:100%;
-  background:#000;
-  border-radius:8px;
-  overflow:hidden;
-  user-select:none;
-}
-
-video{
-  width:100%;
-  height:auto;
-  max-height:76vh;
-  min-height:250px;
-  display:block;
-  margin:auto;
-  background:#000;
-  object-fit:contain;
-  transition:transform .2s ease;
-}
-
-.video-message{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  background:rgba(0,0,0,.75);
-  padding:14px 22px;
-  border-radius:10px;
-  font-size:25px;
-  font-weight:bold;
-  display:none;
-  pointer-events:none;
-  z-index:20;
-}
-
-.panel{
-  margin-top:12px;
-  padding:12px;
-  background:#111;
-  border:1px solid #222;
-  border-radius:10px;
-}
-
-button,
-select,
-input{
-  background:#1b1b1b;
-  color:#fff;
-  border:1px solid #444;
-  border-radius:6px;
-  padding:9px;
-  margin:3px;
-  font-size:14px;
-}
-
-button{
-  cursor:pointer;
-}
-
-button:hover{
-  background:#303030;
-}
-
-button:active{
-  transform:scale(.97);
-}
-
-input[type="range"]{
-  accent-color:#fff;
-}
-
-.file-row{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:5px;
-}
-
-.url{
-  display:flex;
-  width:100%;
-  gap:5px;
-  margin-top:7px;
-}
-
-.url input{
-  flex:1;
-  min-width:0;
-}
-
-.controls{
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:3px;
-  margin-top:6px;
-}
-
-#progress{
-  width:100%;
-  margin:8px 0 2px;
-}
-
-#volume{
-  width:120px;
-}
-
-.time{
-  min-width:48px;
-  text-align:center;
-  font-variant-numeric:tabular-nums;
-}
-
-.drop{
-  border:2px dashed #444;
-  border-radius:8px;
-  padding:15px;
-  text-align:center;
-  margin-bottom:10px;
-  color:#aaa;
-  transition:.2s;
-}
-
-.drop.active{
-  border-color:#fff;
-  color:#fff;
-  background:#111;
-}
-
-.subcontrols{
-  display:flex;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:3px;
-  margin-top:7px;
-}
-
-#status{
-  color:#aaa;
-  margin-top:9px;
-  font-size:14px;
-  min-height:18px;
-}
-
-#ffmpegBox{
-  display:none;
-  margin-top:10px;
-}
-
-#ffmpegProgress{
-  display:block;
-  width:100%;
-  margin-top:5px;
-}
-
-.playlist{
-  margin-top:15px;
-  background:#111;
-  border:1px solid #222;
-  border-radius:10px;
-  padding:12px;
-}
-
-.playlist h2{
-  font-size:20px;
-  margin:2px 0 10px;
-}
-
-.item{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  background:#151515;
-  margin:5px 0;
-  padding:7px;
-  border-radius:7px;
-}
-
-.item-name{
-  flex:1;
-  min-width:0;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-.item.active{
-  outline:1px solid #777;
-  background:#202020;
-}
-
-.locked .panel-controls,
-.locked .subcontrols{
-  pointer-events:none;
-  opacity:.35;
-}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif}
+body{min-height:100vh}
+header{height:58px;display:flex;align-items:center;justify-content:center;background:#080808;border-bottom:1px solid #222;font-size:23px;font-weight:bold}
+.container{width:100%;max-width:1500px;margin:auto;padding:12px}
+.player{position:relative;width:100%;background:#000;border-radius:8px;overflow:hidden}
+video{width:100%;height:auto;max-height:76vh;min-height:250px;display:block;margin:auto;background:#000;object-fit:contain;transition:transform .2s ease}
+.video-message{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);padding:14px 22px;border-radius:10px;font-size:25px;font-weight:bold;display:none;pointer-events:none;z-index:20}
+.panel{margin-top:12px;padding:12px;background:#111;border:1px solid #222;border-radius:10px}
+button,select,input{background:#1b1b1b;color:#fff;border:1px solid #444;border-radius:6px;padding:9px;margin:3px;font-size:14px}
+button{cursor:pointer}
+button:hover{background:#303030}
+button:active{transform:scale(.97)}
+input[type=range]{accent-color:#fff}
+.file-row{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.url{display:flex;width:100%;gap:5px;margin-top:7px}
+.url input{flex:1;min-width:0}
+.controls{display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-top:6px}
+#progress{width:100%;margin:8px 0 2px}
+#volume{width:120px}
+.time{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+.drop{border:2px dashed #444;border-radius:8px;padding:15px;text-align:center;margin-bottom:10px;color:#aaa;transition:.2s}
+.drop.active{border-color:#fff;color:#fff;background:#111}
+.subcontrols{display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-top:7px}
+#status{color:#aaa;margin-top:9px;font-size:14px;min-height:18px}
+#ffmpegBox{display:none;margin-top:10px}
+#ffmpegProgress{display:block;width:100%;margin-top:5px}
+.playlist{margin-top:15px;background:#111;border:1px solid #222;border-radius:10px;padding:12px}
+.playlist h2{font-size:20px;margin:2px 0 10px}
+.item{display:flex;align-items:center;gap:6px;background:#151515;margin:5px 0;padding:7px;border-radius:7px}
+.item-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item.active{outline:1px solid #777;background:#202020}
+.locked .panel-controls,.locked .subcontrols{pointer-events:none;opacity:.35}
 
 @media(max-width:700px){
-
-  header{
-    height:52px;
-    font-size:20px;
-  }
-
-  .container{
-    padding:6px;
-  }
-
-  .panel,
-  .playlist{
-    padding:7px;
-  }
-
-  video{
-    min-height:220px;
-    max-height:70vh;
-  }
-
-  button,
-  select,
-  input{
-    padding:8px;
-    font-size:13px;
-  }
-
-  #volume{
-    width:85px;
-  }
-
-  .video-message{
-    font-size:20px;
-  }
+header{height:52px;font-size:20px}
+.container{padding:6px}
+.panel,.playlist{padding:7px}
+video{min-height:220px;max-height:70vh}
+button,select,input{padding:8px;font-size:13px}
+#volume{width:85px}
+.video-message{font-size:20px}
 }
 
 @media(min-width:1200px){
-
-  button,
-  select{
-    font-size:15px;
-    padding:10px 13px;
-  }
+button,select{font-size:15px;padding:10px 13px}
 }
 
-:fullscreen{
-  background:#000;
-}
-
-:fullscreen .player{
-  width:100vw;
-  height:100vh;
-  border-radius:0;
-}
-
-:fullscreen video{
-  width:100vw;
-  height:100vh;
-  max-height:none;
-  object-fit:contain;
-}
+:fullscreen{background:#000}
+:fullscreen .player{width:100vw;height:100vh;border-radius:0}
+:fullscreen video{width:100vw;height:100vh;max-height:none;object-fit:contain}
 </style>
 </head>
 
 <body>
 
-<header>
-  Universal Player
-</header>
+<header>Universal Player</header>
 
 <div class="container">
 
-  <!-- PLAYER -->
-
-  <div class="player" id="player">
-
-    <video
-      id="video"
-      playsinline
-      preload="metadata">
-    </video>
-
-    <div
-      id="videoMessage"
-      class="video-message">
-    </div>
-
-  </div>
-
-
-  <!-- CONTROLS -->
-
-  <div class="panel">
-
-    <div id="dropZone" class="drop">
-      📂 Drag & Drop Video / Audio Here
-    </div>
-
-
-    <div class="file-row">
-
-      <input
-        id="fileInput"
-        type="file"
-        multiple
-        accept="video/*,audio/*,.mkv,.avi,.mov,.flv,.wmv,.webm,.mp4,.m4v,.ts,.m2ts,.mts,.3gp,.ogv,.mp3,.wav,.flac,.aac,.m4a,.ogg">
-
-    </div>
-
-
-    <div class="url">
-
-      <input
-        id="urlInput"
-        type="url"
-        placeholder="Direct video/audio URL">
-
-      <button id="playUrlBtn">
-        Play URL
-      </button>
-
-    </div>
-
-
-    <!-- PLAYBACK -->
-
-    <div class="controls panel-controls">
-
-      <button id="prevBtn" title="Previous">
-        ⏮
-      </button>
-
-      <button id="playBtn" title="Play/Pause">
-        ▶
-      </button>
-
-      <button id="stopBtn" title="Stop">
-        ■
-      </button>
-
-      <button id="backBtn" title="Back 10 seconds">
-        -10s
-      </button>
-
-      <button id="forwardBtn" title="Forward 10 seconds">
-        +10s
-      </button>
-
-      <button id="nextBtn" title="Next">
-        ⏭
-      </button>
-
-      <span id="currentTime" class="time">
-        00:00
-      </span>
-
-      <span>/</span>
-
-      <span id="duration" class="time">
-        00:00
-      </span>
-
-    </div>
-
-
-    <!-- PROGRESS -->
-
-    <input
-      id="progress"
-      type="range"
-      min="0"
-      max="100"
-      value="0"
-      step="0.01">
-
-
-    <!-- MAIN CONTROLS -->
-
-    <div class="controls panel-controls">
-
-      <button id="muteBtn">
-        🔊
-      </button>
-
-      <input
-        id="volume"
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value="1">
-
-
-      <label>
-        Speed
-      </label>
-
-      <select id="speed">
-      </select>
-
-
-      <label>
-        Screen
-      </label>
-
-      <select id="aspect">
-
-        <option value="contain">
-          Fit
-        </option>
-
-        <option value="cover">
-          Fill
-        </option>
-
-        <option value="fill">
-          Original
-        </option>
-
-      </select>
-
-
-      <button id="rotateBtn">
-        🔄 Rotate
-      </button>
-
-
-      <button id="fullscreenBtn">
-        ⛶ Fullscreen
-      </button>
-
-
-      <button id="pipBtn">
-        ▣ PiP
-      </button>
-
-
-      <button id="lockBtn">
-        🔒 Lock
-      </button>
-
-
-      <select id="repeatMode">
-
-        <option value="off">
-          Repeat Off
-        </option>
-
-        <option value="one">
-          Repeat One
-        </option>
-
-        <option value="all">
-          Repeat All
-        </option>
-
-      </select>
-
-
-      <button id="shuffleBtn">
-        🔀 Shuffle
-      </button>
-
-    </div>
-
-
-    <!-- AUDIO / SUBTITLE -->
-
-    <div class="subcontrols panel-controls">
-
-      <label>
-        Audio
-      </label>
-
-      <select id="audioTracks">
-
-        <option value="-1">
-          Default
-        </option>
-
-      </select>
-
-
-      <label>
-        Subtitle
-      </label>
-
-      <select id="subtitleTracks">
-
-        <option value="-1">
-          Off
-        </option>
-
-      </select>
-
-
-      <input
-        id="subtitleInput"
-        type="file"
-        accept=".srt,.vtt">
-
-
-      <label>
-        Size
-      </label>
-
-      <select id="subtitleSize">
-
-        <option value="18px">
-          Small
-        </option>
-
-        <option value="24px" selected>
-          Medium
-        </option>
-
-        <option value="32px">
-          Large
-        </option>
-
-        <option value="42px">
-          XL
-        </option>
-
-      </select>
-
-    </div>
-
-
-    <!-- STATUS -->
-
-    <div id="status">
-      Ready
-    </div>
-
-
-    <!-- FFMPEG -->
-
-    <div id="ffmpegBox">
-
-      FFmpeg conversion:
-      <span id="ffmpegText">
-        0%
-      </span>
-
-      <progress
-        id="ffmpegProgress"
-        value="0"
-        max="100">
-      </progress>
-
-    </div>
-
-  </div>
-
-
-  <!-- PLAYLIST -->
-
-  <div class="playlist">
-
-    <h2>
-      Playlist / Queue
-    </h2>
-
-    <div id="playlist"></div>
-
-  </div>
+<div class="player" id="player">
+<video id="video" playsinline preload="metadata"></video>
+<div id="videoMessage" class="video-message"></div>
+</div>
+
+<div class="panel">
+
+<div id="dropZone" class="drop">
+📂 Drag & Drop Video / Audio Here
+</div>
+
+<div class="file-row">
+<input id="fileInput" type="file" multiple
+accept="video/*,audio/*,.mkv,.avi,.mov,.flv,.wmv,.webm,.mp4,.m4v,.ts,.m2ts,.mts,.3gp,.ogv,.mp3,.wav,.flac,.aac,.m4a,.ogg">
+</div>
+
+<div class="url">
+<input id="urlInput" type="url" placeholder="Direct video/audio URL">
+<button id="playUrlBtn">Play URL</button>
+</div>
+
+<div class="controls panel-controls">
+
+<button id="prevBtn">⏮</button>
+<button id="playBtn">▶</button>
+<button id="stopBtn">■</button>
+<button id="backBtn">-10s</button>
+<button id="forwardBtn">+10s</button>
+<button id="nextBtn">⏭</button>
+
+<span id="currentTime" class="time">00:00</span>
+<span>/</span>
+<span id="duration" class="time">00:00</span>
 
 </div>
 
+<input id="progress" type="range" min="0" max="100" value="0" step="0.01">
 
-<script
-  type="module"
-  src="./app.js">
-</script>
+<div class="controls panel-controls">
+
+<button id="muteBtn">🔊</button>
+
+<input id="volume" type="range" min="0" max="1" step="0.01" value="1">
+
+<label>Speed</label>
+<select id="speed"></select>
+
+<label>Screen</label>
+<select id="aspect">
+<option value="contain">Fit</option>
+<option value="cover">Fill</option>
+<option value="fill">Original</option>
+</select>
+
+<button id="rotateBtn">🔄 Rotate</button>
+<button id="fullscreenBtn">⛶ Fullscreen</button>
+<button id="pipBtn">▣ PiP</button>
+<button id="lockBtn">🔒 Lock</button>
+
+<select id="repeatMode">
+<option value="off">Repeat Off</option>
+<option value="one">Repeat One</option>
+<option value="all">Repeat All</option>
+</select>
+
+<button id="shuffleBtn">🔀 Shuffle</button>
+
+</div>
+
+<div class="subcontrols panel-controls">
+
+<label>Audio</label>
+<select id="audioTracks">
+<option value="-1">Default</option>
+</select>
+
+<label>Subtitle</label>
+<select id="subtitleTracks">
+<option value="-1">Off</option>
+</select>
+
+<input id="subtitleInput" type="file" accept=".srt,.vtt">
+
+<label>Size</label>
+<select id="subtitleSize">
+<option value="18px">Small</option>
+<option value="24px" selected>Medium</option>
+<option value="32px">Large</option>
+<option value="42px">XL</option>
+</select>
+
+</div>
+
+<div id="status">Ready</div>
+
+<div id="ffmpegBox">
+FFmpeg conversion:
+<span id="ffmpegText">0%</span>
+<progress id="ffmpegProgress" value="0" max="100"></progress>
+</div>
+
+</div>
+
+<div class="playlist">
+<h2>Playlist / Queue</h2>
+<div id="playlist"></div>
+</div>
+
+</div>
+
+<script type="module" src="./app.js"></script>
 
 </body>
 </html>
