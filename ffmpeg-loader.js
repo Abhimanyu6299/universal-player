@@ -1,150 +1,106 @@
-let ffmpegInstance=null;
-let loadingPromise=null;
+let instance = null;
+let loading = null;
+let progressHandler = () => {};
 
-export async function getFFmpeg(
-  onProgress=()=>{}
-){
+export async function getFFmpeg(onProgress = () => {}) {
 
-  if(ffmpegInstance){
+  progressHandler = onProgress;
 
-    ffmpegInstance.progressCallback=
-      onProgress;
+  if (instance) return instance;
 
-    return ffmpegInstance;
-  }
+  if (loading) return loading;
 
-  if(loadingPromise)
-    return loadingPromise;
+  loading = (async () => {
 
-  loadingPromise=(async()=>{
-
-    const {FFmpeg}=await import(
+    const { FFmpeg } = await import(
       "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/+esm"
     );
 
-    const {
-      fetchFile,
-      toBlobURL
-    }=await import(
+    const { fetchFile, toBlobURL } = await import(
       "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/+esm"
     );
 
-    const ffmpeg=new FFmpeg();
+    const ffmpeg = new FFmpeg();
 
-    const state={
-      ffmpeg,
-      fetchFile,
-      progressCallback:onProgress
-    };
+    ffmpeg.on("progress", ({ progress }) => {
 
-    ffmpeg.on(
-      "progress",
-      ({progress})=>{
-
-        state.progressCallback(
-          Math.max(
-            0,
-            Math.min(
-              100,
-              progress*100
-            )
-          )
-        );
-      }
-    );
-
-    const base=
-      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
-
-    const coreURL=
-      await toBlobURL(
-        `${base}/ffmpeg-core.js`,
-        "text/javascript"
+      progressHandler(
+        Math.max(
+          0,
+          Math.min(100, progress * 100)
+        )
       );
 
-    const wasmURL=
-      await toBlobURL(
-        `${base}/ffmpeg-core.wasm`,
-        "application/wasm"
-      );
-
-    await ffmpeg.load({
-      coreURL,
-      wasmURL
     });
 
-    ffmpegInstance=state;
+    const base =
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
 
-    return state;
+    await ffmpeg.load({
+
+      coreURL: await toBlobURL(
+        `${base}/ffmpeg-core.js`,
+        "text/javascript"
+      ),
+
+      wasmURL: await toBlobURL(
+        `${base}/ffmpeg-core.wasm`,
+        "application/wasm"
+      )
+
+    });
+
+    instance = {
+      ffmpeg,
+      fetchFile
+    };
+
+    return instance;
 
   })();
 
-  try{
+  try {
 
-    return await loadingPromise;
+    return await loading;
 
-  }catch(error){
+  } catch (e) {
 
-    loadingPromise=null;
+    loading = null;
 
-    throw error;
+    throw e;
+
   }
+
 }
 
-/* --------------------------------------------------
-   LOCAL MEDIA -> MP4
--------------------------------------------------- */
 
 export async function transcodeToMp4(
   file,
-  onProgress=()=>{},
-  shouldCancel=()=>false
-){
+  onProgress = () => {}
+) {
 
   const {
     ffmpeg,
-    fetchFile,
-    progressCallback
-  }=await getFFmpeg(onProgress);
+    fetchFile
+  } = await getFFmpeg(onProgress);
 
-  progressCallback=onProgress;
+  const id =
+    `${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-  const id=
-    `${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2)}`;
-
-  const input=
+  const input =
     `input_${id}`;
 
-  const output=
+  const output =
     `output_${id}.mp4`;
 
-  try{
-
-    if(shouldCancel())
-      throw new DOMException(
-        "Cancelled",
-        "AbortError"
-      );
-
-    const data=
-      await fetchFile(file);
+  try {
 
     await ffmpeg.writeFile(
       input,
-      data
+      await fetchFile(file)
     );
 
-    if(shouldCancel())
-      throw new DOMException(
-        "Cancelled",
-        "AbortError"
-      );
-
     await ffmpeg.exec([
-
-      "-hide_banner",
 
       "-i",
       input,
@@ -180,82 +136,71 @@ export async function transcodeToMp4(
 
     ]);
 
-    if(shouldCancel())
-      throw new DOMException(
-        "Cancelled",
-        "AbortError"
-      );
-
-    const result=
+    const data =
       await ffmpeg.readFile(output);
 
     return new Blob(
-      [result.buffer],
+      [data.buffer],
       {
         type:"video/mp4"
       }
     );
 
-  }finally{
+  } finally {
 
-    try{
+    try {
       await ffmpeg.deleteFile(input);
-    }catch{}
+    } catch {}
 
-    try{
+    try {
       await ffmpeg.deleteFile(output);
-    }catch{}
+    } catch {}
+
   }
+
 }
 
-/* --------------------------------------------------
-   EXTRACT MULTIPLE AUDIO TRACKS
--------------------------------------------------- */
 
 export async function extractAudioTracks(
-  file,
-  onProgress=()=>{}
-){
+  fileOrUrl,
+  onProgress = () => {},
+  onLog = () => {}
+) {
 
   const {
     ffmpeg,
     fetchFile
-  }=await getFFmpeg(onProgress);
+  } = await getFFmpeg(onProgress);
 
-  const id=
-    `${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2)}`;
+  const id =
+    `${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-  const input=
-    `audio_input_${id}`;
+  const input =
+    `input_${id}`;
 
-  const logLines=[];
+  const logs = [];
 
-  const logHandler=({message})=>{
-    logLines.push(message);
+  const logFn = ({ message }) => {
+
+    logs.push(message);
+
+    onLog(message);
+
   };
 
-  ffmpeg.on(
-    "log",
-    logHandler
-  );
+  ffmpeg.on("log", logFn);
 
-  try{
+  try {
 
-    const data=
-      await fetchFile(file);
+    const data =
+      await fetchFile(fileOrUrl);
 
     await ffmpeg.writeFile(
       input,
       data
     );
 
-    /*
-      Ask FFmpeg to inspect streams.
-    */
-
-    try{
+    try {
 
       await ffmpeg.exec([
         "-hide_banner",
@@ -263,78 +208,75 @@ export async function extractAudioTracks(
         input
       ]);
 
-    }catch{}
+    } catch {}
 
-    const text=
-      logLines.join("\n");
+    const joined =
+      logs.join("\n");
 
-    const tracks=[];
+    const tracks = [];
 
-    /*
-      Detect audio streams.
-    */
+    const re =
+      /Stream #0:(\d+)(?:\(([^)]+)\))?(?:\[[^\]]+\])?:\s*Audio:/gi;
 
-    const regex=
-      /Stream #0:(\d+)(?:\(([^)]+)\))?.*?: Audio:/gi;
+    let m;
 
-    let match;
+    while ((m = re.exec(joined))) {
 
-    while(
-      (match=regex.exec(text))
-    ){
+      const streamIndex =
+        Number(m[1]);
 
-      const streamIndex=
-        Number(match[1]);
+      const language =
+        m[2] || "";
 
-      const language=
-        match[2]||"";
-
-      if(
+      if (
         !tracks.some(
-          t=>t.streamIndex===streamIndex
+          t =>
+            t.streamIndex === streamIndex
         )
-      ){
+      ) {
 
         tracks.push({
+
           streamIndex,
+
           language,
+
           label:
-            language||
-            `Audio ${tracks.length+1}`
+            language ||
+            `Audio ${tracks.length + 1}`
+
         });
+
       }
+
     }
 
-    if(!tracks.length){
+    if (!tracks.length) {
 
       throw new Error(
         "No separate audio streams detected."
       );
+
     }
 
-    const outputs=[];
+    const outputs = [];
 
-    for(
-      let i=0;
-      i<tracks.length;
+    for (
+      let i = 0;
+      i < tracks.length;
       i++
-    ){
+    ) {
 
-      const track=
-        tracks[i];
-
-      const output=
+      const out =
         `audio_${id}_${i}.m4a`;
 
       await ffmpeg.exec([
-
-        "-hide_banner",
 
         "-i",
         input,
 
         "-map",
-        `0:${track.streamIndex}`,
+        `0:${tracks[i].streamIndex}`,
 
         "-vn",
 
@@ -347,52 +289,43 @@ export async function extractAudioTracks(
         "-movflags",
         "+faststart",
 
-        output
+        out
 
       ]);
 
-      const audioData=
-        await ffmpeg.readFile(
-          output
-        );
+      const audioData =
+        await ffmpeg.readFile(out);
 
       outputs.push({
 
-        ...track,
+        ...tracks[i],
 
-        blob:new Blob(
-          [audioData.buffer],
-          {
-            type:"audio/mp4"
-          }
-        )
+        blob:
+          new Blob(
+            [audioData.buffer],
+            {
+              type:"audio/mp4"
+            }
+          )
 
       });
 
-      try{
-        await ffmpeg.deleteFile(
-          output
-        );
-      }catch{}
+      try {
+        await ffmpeg.deleteFile(out);
+      } catch {}
 
-      onProgress(
-        ((i+1)/tracks.length)*100
-      );
     }
 
     return outputs;
 
-  }finally{
+  } finally {
 
-    ffmpeg.off(
-      "log",
-      logHandler
-    );
+    ffmpeg.off("log", logFn);
 
-    try{
-      await ffmpeg.deleteFile(
-        input
-      );
-    }catch{}
+    try {
+      await ffmpeg.deleteFile(input);
+    } catch {}
+
   }
+
 }
