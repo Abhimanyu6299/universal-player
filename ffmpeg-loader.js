@@ -9,120 +9,97 @@ import {
 
 
 let ffmpeg = null;
-
 let loadingPromise = null;
 
 
-/* ================= LOAD FFMPEG ================= */
+/* LOAD FFMPEG */
 
 export async function getFFmpeg(
   onProgress = () => {}
 ) {
 
   if (ffmpeg) {
+    return ffmpeg;
+  }
+
+  if (loadingPromise) {
+    return loadingPromise;
+  }
+
+  loadingPromise = (async () => {
+
+    ffmpeg = new FFmpeg();
+
+    ffmpeg.on(
+      "progress",
+      ({ progress }) => {
+
+        const percent =
+          Math.max(
+            0,
+            Math.min(
+              100,
+              Math.round(progress * 100)
+            )
+          );
+
+        onProgress(percent);
+      }
+    );
+
+    ffmpeg.on(
+      "log",
+      ({ message }) => {
+        console.log(
+          "[FFmpeg]",
+          message
+        );
+      }
+    );
+
+
+    const baseURL =
+      "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
+
+
+    await ffmpeg.load({
+
+      coreURL:
+        await toBlobURL(
+          `${baseURL}/ffmpeg-core.js`,
+          "text/javascript"
+        ),
+
+      wasmURL:
+        await toBlobURL(
+          `${baseURL}/ffmpeg-core.wasm`,
+          "application/wasm"
+        )
+
+    });
+
 
     return ffmpeg;
 
-  }
-
-
-  if (loadingPromise) {
-
-    return loadingPromise;
-
-  }
-
-
-  loadingPromise =
-    (async () => {
-
-      ffmpeg =
-        new FFmpeg();
-
-
-      ffmpeg.on(
-        "progress",
-        ({progress}) => {
-
-          const percent =
-            Math.max(
-              0,
-              Math.min(
-                100,
-                Math.round(
-                  progress * 100
-                )
-              )
-            );
-
-
-          onProgress(
-            percent
-          );
-
-        }
-      );
-
-
-      ffmpeg.on(
-        "log",
-        ({message}) => {
-
-          console.log(
-            "[FFmpeg]",
-            message
-          );
-
-        }
-      );
-
-
-      const baseURL =
-        "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd";
-
-
-      await ffmpeg.load({
-
-        coreURL:
-          await toBlobURL(
-            `${baseURL}/ffmpeg-core.js`,
-            "text/javascript"
-          ),
-
-        wasmURL:
-          await toBlobURL(
-            `${baseURL}/ffmpeg-core.wasm`,
-            "application/wasm"
-          )
-
-      });
-
-
-      return ffmpeg;
-
-    })();
+  })();
 
 
   try {
 
     return await loadingPromise;
 
-  } catch(error) {
+  } catch (error) {
 
-    ffmpeg =
-      null;
-
-    loadingPromise =
-      null;
+    ffmpeg = null;
+    loadingPromise = null;
 
     throw error;
 
   }
-
 }
 
 
-/* ================= TRANSCODE VIDEO ================= */
+/* TRANSCODE */
 
 export async function transcodeVideo(
   file,
@@ -130,20 +107,15 @@ export async function transcodeVideo(
 ) {
 
   const engine =
-    await getFFmpeg(
-      onProgress
-    );
+    await getFFmpeg(onProgress);
 
 
   const extension =
-    getExtension(
-      file.name
-    );
+    getExtension(file.name);
 
 
   const inputName =
     `input.${extension}`;
-
 
   const outputName =
     "output.mp4";
@@ -158,6 +130,7 @@ export async function transcodeVideo(
 
 
     await engine.exec([
+
       "-i",
       inputName,
 
@@ -180,6 +153,7 @@ export async function transcodeVideo(
       "+faststart",
 
       outputName
+
     ]);
 
 
@@ -192,7 +166,7 @@ export async function transcodeVideo(
     return new Blob(
       [data.buffer],
       {
-        type:"video/mp4"
+        type: "video/mp4"
       }
     );
 
@@ -200,39 +174,31 @@ export async function transcodeVideo(
   } finally {
 
     try {
-
       await engine.deleteFile(
         inputName
       );
-
     } catch {}
 
 
     try {
-
       await engine.deleteFile(
         outputName
       );
-
     } catch {}
 
   }
-
 }
 
 
-/* ================= EXTENSION ================= */
+/* EXTENSION */
 
 function getExtension(name) {
 
   const parts =
-    String(name)
-      .split(".");
+    String(name).split(".");
 
 
-  if (
-    parts.length > 1
-  ) {
+  if (parts.length > 1) {
 
     return parts
       .pop()
@@ -246,5 +212,4 @@ function getExtension(name) {
 
 
   return "bin";
-
 }
