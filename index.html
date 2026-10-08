@@ -8,6 +8,7 @@
 
 <style>
 *{box-sizing:border-box}
+
 html,body{
   margin:0;
   width:100%;
@@ -16,6 +17,7 @@ html,body{
   color:#fff;
   font-family:Arial,sans-serif;
 }
+
 body{overflow:hidden}
 
 .app{
@@ -44,7 +46,7 @@ body{overflow:hidden}
 
 .top-actions{
   display:flex;
-  gap:8px;
+  gap:7px;
 }
 
 button,select,input{
@@ -52,17 +54,12 @@ button,select,input{
   color:#fff;
   border:1px solid #333;
   border-radius:7px;
-  padding:9px 12px;
+  padding:8px 11px;
   font-size:14px;
 }
 
-button{
-  cursor:pointer;
-}
-
-button:hover{
-  background:#1d1d1d;
-}
+button{cursor:pointer}
+button:hover{background:#1d1d1d}
 
 .content{
   flex:1;
@@ -78,11 +75,11 @@ button:hover{
   height:100%;
   max-width:1800px;
   position:relative;
-  background:#000;
   display:flex;
   align-items:center;
   justify-content:center;
   overflow:hidden;
+  background:#000;
   border-radius:8px;
 }
 
@@ -100,11 +97,11 @@ video{
   inset:0;
   display:flex;
   flex-direction:column;
-  align-items:center;
   justify-content:center;
+  align-items:center;
   text-align:center;
-  pointer-events:none;
   padding:30px;
+  pointer-events:none;
 }
 
 .empty-title{
@@ -115,24 +112,23 @@ video{
 
 .empty-text{
   color:#999;
-  font-size:16px;
 }
 
 .bottom{
   background:#070707;
   border-top:1px solid #222;
-  padding:10px;
+  padding:9px;
 }
 
 .progress{
   width:100%;
-  margin-bottom:9px;
+  margin-bottom:8px;
 }
 
-.progress input{
+#progress{
   width:100%;
-  padding:0;
   height:5px;
+  padding:0;
   border:0;
   cursor:pointer;
 }
@@ -140,13 +136,13 @@ video{
 .controls{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:7px;
   flex-wrap:wrap;
 }
 
 .url-box{
   flex:1;
-  min-width:220px;
+  min-width:230px;
 }
 
 .url-box input{
@@ -154,34 +150,48 @@ video{
 }
 
 .time{
-  min-width:95px;
+  min-width:100px;
   text-align:center;
   color:#bbb;
   font-size:13px;
 }
 
-.history-panel{
+.volume{
+  width:100px;
+  accent-color:#fff;
+}
+
+.panel{
   display:none;
   position:absolute;
+  z-index:50;
   right:12px;
-  top:65px;
-  width:min(380px,calc(100% - 24px));
-  max-height:60vh;
+  top:12px;
+  width:min(390px,calc(100% - 24px));
+  max-height:65vh;
   overflow:auto;
   background:#101010;
   border:1px solid #333;
   border-radius:10px;
-  z-index:20;
   padding:12px;
 }
 
-.history-panel.show{
-  display:block;
-}
+.panel.show{display:block}
 
-.history-title{
+.panel-title{
   font-weight:bold;
   margin-bottom:10px;
+}
+
+.panel-row{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:10px;
+}
+
+.panel-row input{
+  flex:1;
 }
 
 .history-item{
@@ -195,37 +205,40 @@ video{
   background:#1b1b1b;
 }
 
-.no-history{
-  color:#888;
-  padding:10px 0;
+.message{
+  position:absolute;
+  left:50%;
+  bottom:90px;
+  transform:translateX(-50%);
+  background:#151515;
+  border:1px solid #444;
+  border-radius:8px;
+  padding:10px 15px;
+  display:none;
+  z-index:100;
+  max-width:90%;
+  text-align:center;
 }
 
+.message.show{display:block}
+
 @media(max-width:700px){
+
   .topbar{
     height:52px;
     min-height:52px;
     padding:0 10px;
   }
 
-  .logo{
-    font-size:17px;
-  }
+  .logo{font-size:17px}
 
-  .content{
-    padding:0;
-  }
+  .content{padding:0}
 
-  .player{
-    border-radius:0;
-  }
+  .player{border-radius:0}
 
-  .bottom{
-    padding:7px;
-  }
+  .bottom{padding:7px}
 
-  .controls{
-    gap:5px;
-  }
+  .controls{gap:5px}
 
   button,select,input{
     padding:8px 9px;
@@ -234,11 +247,11 @@ video{
 
   .url-box{
     min-width:100%;
-    order:10;
+    order:20;
   }
 
-  .time{
-    min-width:auto;
+  .volume{
+    width:75px;
   }
 }
 </style>
@@ -249,21 +262,22 @@ video{
 <div class="app">
 
 <header class="topbar">
+
   <div class="logo">Universal Player</div>
 
   <div class="top-actions">
-    <button id="historyBtn">History</button>
+    <button id="subtitleButton">Subtitle</button>
+    <button id="historyButton">History</button>
   </div>
+
 </header>
 
 <main class="content">
 
 <section class="player" id="player">
 
-  <video
-    id="video"
-    playsinline
-    preload="metadata">
+  <video id="video" playsinline preload="metadata">
+    <track id="subtitleTrack" kind="subtitles" label="External Subtitle">
   </video>
 
   <div class="empty" id="empty">
@@ -273,10 +287,41 @@ video{
     </div>
   </div>
 
-  <div class="history-panel" id="historyPanel">
-    <div class="history-title">Playback History</div>
-    <div id="historyList"></div>
+  <div class="panel" id="subtitlePanel">
+
+    <div class="panel-title">Subtitles</div>
+
+    <div class="panel-row">
+      <button id="subtitleFileButton">
+        Open Subtitle
+      </button>
+
+      <input
+        id="subtitleFile"
+        type="file"
+        accept=".srt,.vtt,text/vtt,application/x-subrip"
+        hidden>
+    </div>
+
+    <div class="panel-row">
+      <button id="subtitleOff">
+        Turn Off
+      </button>
+    </div>
+
   </div>
+
+  <div class="panel" id="historyPanel">
+
+    <div class="panel-title">
+      Playback History
+    </div>
+
+    <div id="historyList"></div>
+
+  </div>
+
+  <div class="message" id="message"></div>
 
 </section>
 
@@ -290,13 +335,13 @@ video{
       type="range"
       min="0"
       max="100"
-      value="0"
-      step="0.01">
+      step="0.01"
+      value="0">
   </div>
 
   <div class="controls">
 
-    <button id="fileButton">Open</button>
+    <button id="openButton">Open</button>
 
     <input
       id="fileInput"
@@ -309,9 +354,28 @@ video{
     <button id="back10">−10s</button>
     <button id="forward10">+10s</button>
 
-    <span class="time" id="time">00:00 / 00:00</span>
+    <span class="time" id="time">
+      00:00 / 00:00
+    </span>
+
+    <button id="mute">🔊</button>
+
+    <input
+      id="volume"
+      class="volume"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="1">
 
     <select id="speed"></select>
+
+    <select id="aspect">
+      <option value="contain">Fit</option>
+      <option value="cover">Fill</option>
+      <option value="none">Original</option>
+    </select>
 
     <button id="rotate">↻ Rotate</button>
 
@@ -333,33 +397,71 @@ video{
 </div>
 
 <script>
-const video = document.getElementById("video");
-const fileInput = document.getElementById("fileInput");
-const fileButton = document.getElementById("fileButton");
-const playPause = document.getElementById("playPause");
-const back10 = document.getElementById("back10");
-const forward10 = document.getElementById("forward10");
-const progress = document.getElementById("progress");
-const timeDisplay = document.getElementById("time");
-const speed = document.getElementById("speed");
-const rotateButton = document.getElementById("rotate");
-const fullscreen = document.getElementById("fullscreen");
-const urlInput = document.getElementById("urlInput");
-const urlButton = document.getElementById("urlButton");
-const empty = document.getElementById("empty");
-const historyBtn = document.getElementById("historyBtn");
-const historyPanel = document.getElementById("historyPanel");
-const historyList = document.getElementById("historyList");
 
-let currentObjectURL = null;
-let rotation = 0;
+const video=document.getElementById("video");
+const fileInput=document.getElementById("fileInput");
+const openButton=document.getElementById("openButton");
+const playPause=document.getElementById("playPause");
+const back10=document.getElementById("back10");
+const forward10=document.getElementById("forward10");
+const progress=document.getElementById("progress");
+const time=document.getElementById("time");
+const speed=document.getElementById("speed");
+const volume=document.getElementById("volume");
+const mute=document.getElementById("mute");
+const aspect=document.getElementById("aspect");
+const rotate=document.getElementById("rotate");
+const fullscreen=document.getElementById("fullscreen");
+const urlInput=document.getElementById("urlInput");
+const urlButton=document.getElementById("urlButton");
+const empty=document.getElementById("empty");
 
-/* SPEED OPTIONS
-   Fine control from 0.25 to 2.00
-*/
-for(let i=25;i<=200;i++){
+const subtitleButton=document.getElementById("subtitleButton");
+const subtitlePanel=document.getElementById("subtitlePanel");
+const subtitleFileButton=document.getElementById("subtitleFileButton");
+const subtitleFile=document.getElementById("subtitleFile");
+const subtitleOff=document.getElementById("subtitleOff");
+const subtitleTrack=document.getElementById("subtitleTrack");
+
+const historyButton=document.getElementById("historyButton");
+const historyPanel=document.getElementById("historyPanel");
+const historyList=document.getElementById("historyList");
+
+const message=document.getElementById("message");
+
+let objectURL=null;
+let subtitleURL=null;
+let rotation=0;
+let currentMediaKey=null;
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+function showMessage(text){
+
+  message.textContent=text;
+  message.classList.add("show");
+
+  clearTimeout(showMessage.timer);
+
+  showMessage.timer=setTimeout(()=>{
+    message.classList.remove("show");
+  },3000);
+}
+
+
+/* =========================
+   SPEED
+========================= */
+
+for(let i=25;i<=400;i++){
+
   const value=(i/100).toFixed(2);
+
   const option=document.createElement("option");
+
   option.value=value;
   option.textContent=value+"×";
 
@@ -370,8 +472,16 @@ for(let i=25;i<=200;i++){
   speed.appendChild(option);
 }
 
+
+/* =========================
+   TIME
+========================= */
+
 function formatTime(seconds){
-  if(!Number.isFinite(seconds)) return "00:00";
+
+  if(!Number.isFinite(seconds)){
+    return "00:00";
+  }
 
   seconds=Math.max(0,Math.floor(seconds));
 
@@ -380,6 +490,7 @@ function formatTime(seconds){
   const s=seconds%60;
 
   if(h>0){
+
     return String(h).padStart(2,"0")+":"+
            String(m).padStart(2,"0")+":"+
            String(s).padStart(2,"0");
@@ -390,10 +501,11 @@ function formatTime(seconds){
 }
 
 function updateTime(){
-  const current=video.currentTime || 0;
-  const duration=video.duration || 0;
 
-  timeDisplay.textContent =
+  const current=video.currentTime||0;
+  const duration=video.duration||0;
+
+  time.textContent=
     formatTime(current)+" / "+formatTime(duration);
 
   if(duration){
@@ -401,30 +513,331 @@ function updateTime(){
   }
 }
 
+
+/* =========================
+   PLAY
+========================= */
+
 function updatePlayButton(){
-  playPause.textContent=video.paused ? "▶" : "⏸";
+
+  playPause.textContent=
+    video.paused ? "▶" : "⏸";
 }
 
-function hideEmpty(){
+playPause.addEventListener("click",()=>{
+
+  if(video.paused){
+
+    video.play().catch(()=>{
+      showMessage("Playback could not start.");
+    });
+
+  }else{
+
+    video.pause();
+  }
+
+});
+
+
+/* =========================
+   OPEN FILE
+========================= */
+
+openButton.addEventListener("click",()=>{
+  fileInput.click();
+});
+
+fileInput.addEventListener("change",()=>{
+
+  const file=fileInput.files[0];
+
+  if(!file)return;
+
+  if(objectURL){
+    URL.revokeObjectURL(objectURL);
+  }
+
+  objectURL=URL.createObjectURL(file);
+
+  currentMediaKey=objectURL;
+
+  video.src=objectURL;
+  video.load();
+
   empty.style.display="none";
+
+  video.play().catch(()=>{});
+
+  saveHistory(file.name,objectURL);
+});
+
+
+/* =========================
+   URL
+========================= */
+
+urlButton.addEventListener("click",()=>{
+
+  const url=urlInput.value.trim();
+
+  if(!url)return;
+
+  currentMediaKey=url;
+
+  video.src=url;
+  video.load();
+
+  empty.style.display="none";
+
+  video.play().catch(()=>{
+    showMessage(
+      "URL playback failed. The server may block browser access or CORS."
+    );
+  });
+
+  saveHistory(url,url);
+});
+
+
+/* =========================
+   SEEK
+========================= */
+
+back10.addEventListener("click",()=>{
+  video.currentTime=
+    Math.max(0,video.currentTime-10);
+});
+
+forward10.addEventListener("click",()=>{
+  video.currentTime=
+    Math.min(
+      video.duration||Infinity,
+      video.currentTime+10
+    );
+});
+
+progress.addEventListener("input",()=>{
+
+  if(!video.duration)return;
+
+  video.currentTime=
+    Number(progress.value)/100*video.duration;
+});
+
+
+/* =========================
+   SPEED
+========================= */
+
+speed.addEventListener("change",()=>{
+
+  video.playbackRate=
+    Number(speed.value);
+});
+
+
+/* =========================
+   VOLUME
+========================= */
+
+volume.addEventListener("input",()=>{
+
+  video.volume=Number(volume.value);
+
+  if(video.volume===0){
+    video.muted=true;
+  }else{
+    video.muted=false;
+  }
+
+  updateMuteButton();
+});
+
+mute.addEventListener("click",()=>{
+
+  video.muted=!video.muted;
+
+  updateMuteButton();
+});
+
+function updateMuteButton(){
+
+  mute.textContent=
+    video.muted || video.volume===0
+    ? "🔇"
+    : "🔊";
 }
 
-function addHistory(name,url){
+
+/* =========================
+   ASPECT RATIO
+========================= */
+
+aspect.addEventListener("change",()=>{
+
+  video.style.objectFit=
+    aspect.value;
+
+});
+
+
+/* =========================
+   ROTATION
+========================= */
+
+rotate.addEventListener("click",()=>{
+
+  rotation=(rotation+90)%360;
+
+  video.style.transform=
+    "rotate("+rotation+"deg)";
+});
+
+
+/* =========================
+   FULLSCREEN
+========================= */
+
+fullscreen.addEventListener("click",async()=>{
+
+  try{
+
+    if(document.fullscreenElement){
+
+      await document.exitFullscreen();
+
+    }else{
+
+      await document.documentElement.requestFullscreen();
+    }
+
+  }catch(error){
+
+    showMessage("Fullscreen is not available.");
+  }
+
+});
+
+
+/* =========================
+   SUBTITLE PANEL
+========================= */
+
+subtitleButton.addEventListener("click",()=>{
+
+  historyPanel.classList.remove("show");
+
+  subtitlePanel.classList.toggle("show");
+});
+
+
+/* =========================
+   SUBTITLE FILE
+========================= */
+
+subtitleFileButton.addEventListener("click",()=>{
+  subtitleFile.click();
+});
+
+subtitleFile.addEventListener("change",async()=>{
+
+  const file=subtitleFile.files[0];
+
+  if(!file)return;
+
+  try{
+
+    const text=await file.text();
+
+    let vtt=text;
+
+    if(file.name.toLowerCase().endsWith(".srt")){
+
+      vtt=
+        "WEBVTT\n\n"+
+        convertSrtToVtt(text);
+    }
+
+    if(subtitleURL){
+      URL.revokeObjectURL(subtitleURL);
+    }
+
+    const blob=new Blob(
+      [vtt],
+      {type:"text/vtt"}
+    );
+
+    subtitleURL=URL.createObjectURL(blob);
+
+    subtitleTrack.src=subtitleURL;
+    subtitleTrack.kind="subtitles";
+    subtitleTrack.label=file.name;
+    subtitleTrack.srclang="en";
+
+    subtitleTrack.track.mode="showing";
+
+    showMessage("Subtitle loaded.");
+
+  }catch(error){
+
+    showMessage("Could not load subtitle.");
+  }
+
+});
+
+
+/* =========================
+   SRT → VTT
+========================= */
+
+function convertSrtToVtt(text){
+
+  return text
+    .replace(/\r+/g,"")
+    .replace(
+      /(\d{2}:\d{2}:\d{2}),(\d{3})/g,
+      "$1.$2"
+    );
+}
+
+
+/* =========================
+   SUBTITLE OFF
+========================= */
+
+subtitleOff.addEventListener("click",()=>{
+
+  subtitleTrack.track.mode="disabled";
+
+  subtitlePanel.classList.remove("show");
+});
+
+
+/* =========================
+   HISTORY
+========================= */
+
+function saveHistory(name,url){
+
   let history=JSON.parse(
-    localStorage.getItem("universalPlayerHistory") || "[]"
+    localStorage.getItem(
+      "universalPlayerHistory"
+    )||"[]"
   );
 
-  history=history.filter(item =>
-    item.url !== url
+  history=history.filter(
+    item=>item.url!==url
   );
 
   history.unshift({
     name:name,
     url:url,
-    time:Date.now()
+    position:0,
+    date:Date.now()
   });
 
-  history=history.slice(0,30);
+  history=history.slice(0,50);
 
   localStorage.setItem(
     "universalPlayerHistory",
@@ -437,14 +850,18 @@ function addHistory(name,url){
 function renderHistory(){
 
   const history=JSON.parse(
-    localStorage.getItem("universalPlayerHistory") || "[]"
+    localStorage.getItem(
+      "universalPlayerHistory"
+    )||"[]"
   );
 
   historyList.innerHTML="";
 
   if(!history.length){
+
     historyList.innerHTML=
-      '<div class="no-history">No history yet</div>';
+      '<div style="color:#888;padding:10px">No history yet</div>';
+
     return;
   }
 
@@ -458,10 +875,22 @@ function renderHistory(){
 
     div.addEventListener("click",()=>{
 
+      currentMediaKey=item.url;
+
       video.src=item.url;
       video.load();
 
-      hideEmpty();
+      empty.style.display="none";
+
+      video.addEventListener(
+        "loadedmetadata",
+        ()=>{
+          if(item.position){
+            video.currentTime=item.position;
+          }
+        },
+        {once:true}
+      );
 
       video.play().catch(()=>{});
 
@@ -472,148 +901,85 @@ function renderHistory(){
   });
 }
 
-fileButton.addEventListener("click",()=>{
-  fileInput.click();
-});
+historyButton.addEventListener("click",()=>{
 
-fileInput.addEventListener("change",()=>{
-
-  const file=fileInput.files[0];
-
-  if(!file) return;
-
-  if(currentObjectURL){
-    URL.revokeObjectURL(currentObjectURL);
-  }
-
-  currentObjectURL=URL.createObjectURL(file);
-
-  video.src=currentObjectURL;
-
-  video.load();
-
-  hideEmpty();
-
-  video.play().catch(()=>{});
-
-  addHistory(file.name,currentObjectURL);
-});
-
-urlButton.addEventListener("click",()=>{
-
-  const url=urlInput.value.trim();
-
-  if(!url) return;
-
-  video.src=url;
-
-  video.load();
-
-  hideEmpty();
-
-  video.play().catch(()=>{});
-
-  addHistory(url,url);
-});
-
-playPause.addEventListener("click",()=>{
-
-  if(video.paused){
-    video.play().catch(()=>{});
-  }else{
-    video.pause();
-  }
-
-});
-
-back10.addEventListener("click",()=>{
-  video.currentTime=Math.max(
-    0,
-    video.currentTime-10
-  );
-});
-
-forward10.addEventListener("click",()=>{
-  video.currentTime=Math.min(
-    video.duration || Infinity,
-    video.currentTime+10
-  );
-});
-
-progress.addEventListener("input",()=>{
-
-  if(!video.duration) return;
-
-  video.currentTime=
-    (Number(progress.value)/100)*video.duration;
-
-});
-
-speed.addEventListener("change",()=>{
-  video.playbackRate=Number(speed.value);
-});
-
-rotateButton.addEventListener("click",()=>{
-
-  rotation=(rotation+90)%360;
-
-  video.style.transform=
-    "rotate("+rotation+"deg)";
-
-});
-
-fullscreen.addEventListener("click",async()=>{
-
-  try{
-
-    if(document.fullscreenElement){
-      await document.exitFullscreen();
-      return;
-    }
-
-    if(document.documentElement.requestFullscreen){
-      await document.documentElement.requestFullscreen();
-    }
-
-  }catch(error){
-    console.log(error);
-  }
-
-});
-
-historyBtn.addEventListener("click",()=>{
+  subtitlePanel.classList.remove("show");
 
   historyPanel.classList.toggle("show");
 
   renderHistory();
-
 });
+
+
+/* =========================
+   SAVE POSITION
+========================= */
+
+video.addEventListener("timeupdate",()=>{
+
+  updateTime();
+
+  if(!currentMediaKey)return;
+
+  let history=JSON.parse(
+    localStorage.getItem(
+      "universalPlayerHistory"
+    )||"[]"
+  );
+
+  const item=history.find(
+    x=>x.url===currentMediaKey
+  );
+
+  if(item){
+
+    item.position=video.currentTime;
+
+    localStorage.setItem(
+      "universalPlayerHistory",
+      JSON.stringify(history)
+    );
+  }
+});
+
+
+/* =========================
+   EVENTS
+========================= */
 
 video.addEventListener("play",updatePlayButton);
 video.addEventListener("pause",updatePlayButton);
-
-video.addEventListener("timeupdate",updateTime);
 video.addEventListener("loadedmetadata",updateTime);
 
 video.addEventListener("loadeddata",()=>{
-  hideEmpty();
+  empty.style.display="none";
 });
 
 video.addEventListener("error",()=>{
 
-  console.log(
-    "This browser cannot play this media."
+  showMessage(
+    "This media cannot be played by the current browser engine."
   );
-
 });
+
+
+/* =========================
+   KEYBOARD
+========================= */
 
 document.addEventListener("keydown",(event)=>{
 
-  if(event.target.tagName==="INPUT") return;
+  if(
+    event.target.tagName==="INPUT" ||
+    event.target.tagName==="SELECT"
+  ){
+    return;
+  }
 
   switch(event.key){
 
     case " ":
+
       event.preventDefault();
 
       if(video.paused){
@@ -625,35 +991,80 @@ document.addEventListener("keydown",(event)=>{
       break;
 
     case "ArrowLeft":
-      video.currentTime=Math.max(
-        0,
-        video.currentTime-5
-      );
+
+      video.currentTime=
+        Math.max(
+          0,
+          video.currentTime-5
+        );
+
       break;
 
     case "ArrowRight":
-      video.currentTime=Math.min(
-        video.duration || Infinity,
-        video.currentTime+5
-      );
+
+      video.currentTime=
+        Math.min(
+          video.duration||Infinity,
+          video.currentTime+5
+        );
+
+      break;
+
+    case "ArrowUp":
+
+      video.volume=
+        Math.min(1,video.volume+0.05);
+
+      volume.value=video.volume;
+
+      break;
+
+    case "ArrowDown":
+
+      video.volume=
+        Math.max(0,video.volume-0.05);
+
+      volume.value=video.volume;
+
+      break;
+
+    case "m":
+    case "M":
+
+      video.muted=!video.muted;
+      updateMuteButton();
+
       break;
 
     case "f":
     case "F":
+
       fullscreen.click();
+
       break;
 
     case "r":
     case "R":
-      rotateButton.click();
-      break;
 
+      rotate.click();
+
+      break;
   }
 
 });
 
-renderHistory();
+
+/* =========================
+   INITIAL STATE
+========================= */
+
+video.volume=1;
+volume.value=1;
+
+updateMuteButton();
 updatePlayButton();
+renderHistory();
+
 </script>
 
 </body>
